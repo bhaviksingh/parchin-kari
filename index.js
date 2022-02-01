@@ -42,7 +42,7 @@ const cF = (x, y, angle, d, i) => {
     i: i,
     d: 1000,
     size: FS,
-    isFlower: true,
+    isFlower: true, 
   };
 };
 
