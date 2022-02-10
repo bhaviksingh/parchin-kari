@@ -1,37 +1,73 @@
 let a1;
 
-let W = 400;
-let H = 400;
+let W = Math.random() * 400 + 200;
+let H = Math.random() * 400 + 200;
 let M = 10;
 let SPACING = 10;
 
-let currentLeaves; 
+const ANIMATE = true;
+const GHOST = false;
+
+let currentLeaves;
+let newLeaves;
 
 function setup() {
-  createCanvas(W,H);
-  a1 = algo(W,H, M, SPACING);
-  currentLeaves = a1().all;
+  createCanvas(W, H);
+  a1 = algo(W, H, M, SPACING);
+  iterate();
+  background(255, 255, 255);
+  rectMode(CENTER);
 }
 
 function draw() {
-  background(255,255,255)
-  strokeWeight(3);
+  if (GHOST) background(255, 255, 255, 60);
 
+  //Draw last branch
+  strokeWeight(1);
   currentLeaves.forEach((branch) => {
-    branch.forEach((node) => {
-      if (node.type == "*") {
-        rect(node.x, node.y, node.size, node.size);
-      } else {
-        point(node.x, node.y);
-      }
-    } )
-
-    //currentLeaves = a1().all;
+    let cn = branch[branch.length - 1];
+    let pn = branch[branch.length - 2];
+    line(cn.x, cn.y, pn.x, pn.y);
   });
-  
+
+  //Draw only new leaves as points
+
+  newLeaves.forEach((node) => {
+    drawLeaf(node);
+  });
+
+  if (ANIMATE) {
+    iterate();
+  }
 }
 
-function mousePressed() {
-  currentLeaves = a1().all;
-  console.log(currentLeaves);
+function drawLeaf(node) {
+  push();
+  if (node.type == "*") {
+    strokeWeight(1);
+    fill("yellow");
+    rect(node.x, node.y, node.size, node.size);
+  } else {
+    strokeWeight(3);
+    point(node.x, node.y);
+  }
+  pop();
+}
+
+function iterate() {
+  //console.log("iterating")
+  const generatedLeaves = a1();
+  currentLeaves = generatedLeaves.all;
+  newLeaves = generatedLeaves.new;
+  //console.log(currentLeaves);
+  //console.log(newLeaves);
+}
+
+
+function keyPressed() {
+  iterate();
+  if (key == "q") {
+    background(255, 255, 255);
+    a1 = algo(W, H, M, SPACING);
+  }
 }
