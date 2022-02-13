@@ -3,7 +3,7 @@ let a1;
 let W = Math.random() * 400 + 200;
 let H = Math.random() * 400 + 200;
 let M = 10;
-let SPACING = 10;
+let SPACING = 15;
 
 const ANIMATE = true;
 const GHOST = false;
