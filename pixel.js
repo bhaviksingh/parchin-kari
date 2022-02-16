@@ -1,20 +1,16 @@
 
-function resizeWithCSSPixelated(cnv, w,h) {
-  cnv.style = `width: ${w}px; height: ${h}px`;
-  cnv.className = "pixelated-rendering";
-} 
-const sf = 10;
 
 const pixel = (p) => {
-  let a1;
+  let f1;
 
-  let W = Math.random() * 40 + 20;
-  let H = Math.random() * 40 + 20;
-  let M = 2;
-  let SPACING = 1;
+  let W = Math.random() * 400 + 200;
+  let H = Math.random() * 400 + 200;
+  let M = 20;
+  let SPACING = 20;
   
+  const RSIZE = 4;
 
-  const ANIMATE = true;
+  const ANIMATE = false;
   const GHOST = false;
 
   let currentLeaves;
@@ -23,22 +19,44 @@ const pixel = (p) => {
 
   p.setup = () => {
     let cnv = p.createCanvas(W, H);
-    a1 = algo(W, H, M, SPACING);
+    f1 = plant(W, H, M, SPACING);
     iterate();
-    p.background(255, 255, 255);
     p.rectMode(p.CENTER);
-    resizeWithCSSPixelated(cnv.canvas, W*sf,H*sf);
+    p.colorMode(p.HSB);
+    p.background(30, 100, 15);
   }
+
+  let h = 100;
+  let s = 20;
 
   p.draw = () => {
     if (GHOST) p.background(255, 255, 255, 60);
 
     //Draw last branch
-    p.strokeWeight(1);
+    
+    
+
     currentLeaves.forEach((branch) => {
       let cn = branch[branch.length - 1];
       let pn = branch[branch.length - 2];
-      p.line(cn.x, cn.y, pn.x, pn.y);
+      //p.strokeWeight(1);
+      // p.line(cn.x, cn.y, pn.x, pn.y);
+      
+      p.noStroke();
+      
+      if (cn.type != "*") {
+
+        for (let i =0; i<M; i = i + RSIZE) {
+          p.fill(h,s,s);
+
+          const nx = pn.x + i * Math.cos(pn.angle);
+          const ny = pn.y + i * Math.sin(pn.angle);
+          p.rect( nx, ny, RSIZE);
+          h = h + 20;
+        }
+      }
+      h = p.random(100, 150);
+      
     });
 
     //Draw only new leaves as points
@@ -47,27 +65,29 @@ const pixel = (p) => {
       drawLeaf(node);
     });
 
-    if (ANIMATE) {
+    if (p.frameCount % 5 == 0) {
       iterate();
+      s = (s+ 1) % 100;
     }
+    
   }
 
   function drawLeaf(node) {
     p.push();
     if (node.type == "*") {
-      p.strokeWeight(1);
-      p.fill("yellow");
-      p.rect(node.x, node.y, node.size, node.size);
+      if (node.color) p.fill(node.color) 
+      else p.fill("yellow");
+      p.rect(node.x, node.y, RSIZE * 2 );
     } else {
-      p.strokeWeight(3);
-      p.point(node.x, node.y);
+      p.fill("black");
+      //p.rect(node.x, node.y, RSIZE);
     }
     p.pop();
   }
 
   function iterate() {
     //console.log("iterating")
-    const generatedLeaves = a1();
+    const generatedLeaves = f1();
     currentLeaves = generatedLeaves.all;
     newLeaves = generatedLeaves.new;
     //console.log(currentLeaves);
@@ -77,8 +97,8 @@ const pixel = (p) => {
   p.keyPressed  = () => {
     iterate();
     if (p.key == "q") {
-      p.background(255, 255, 255);
-      a1 = algo(W, H, M, SPACING);
+      p.background(30, 100, 15);
+      f1 = plant(W, H, M, SPACING);
     }
   }
 };

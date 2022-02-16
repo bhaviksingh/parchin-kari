@@ -30,7 +30,7 @@ const ld = (mgs, ...args) => {
     console.log(msg, args);
   }
 };
-const algo = (W, H, M, SPACING) => {
+const plant = (W, H, M, SPACING) => {
   const BRANCH_PROBABILITY = 0.2;
   const MAX_DEPTH = 1;
   const INIT_ANGLE = 1.5 *  Math.PI;
@@ -114,7 +114,7 @@ const algo = (W, H, M, SPACING) => {
   };
   const intersectsCurve = (n, nn) => {
     const myAngle = n.angle - INIT_ANGLE + (n.flipped ? BRANCH_ANGLE : -1 * BRANCH_ANGLE);
-    if (myAngle && Math.abs(myAngle) > 1.5 * Math.PI) {
+    if (myAngle && Math.abs(myAngle) > 1.9 * Math.PI) {
       //console.log("Stopping at ", myAngle / Math.PI);
       return true;
     }
@@ -162,9 +162,12 @@ const algo = (W, H, M, SPACING) => {
         console.log("Creating curved node", newNode);
       }
     } else if (node.type == "+") {
+      //TOOD: Can optimizie this by unbundling checks and doing more efficient ones first
       newNode = makeCurvedNode(node);
-      if (out(newNode) || intersectsCurve(node, newNode)){
-        newNode = makeFlowerNode(node);
+      let isOut = out(newNode);
+      let intersectsC = intersectsCurve(node, newNode);
+      if (isOut || intersectsC){
+        newNode = makeFlowerNode({...node, color: intersectsC ? "red" : "purple"});
       }
     }
     addToBranch(newNode);
@@ -200,6 +203,46 @@ const algo = (W, H, M, SPACING) => {
   return addLeaf;
 };
 
+
+const garden = (W,H) => {
+
+  const divide = Math.random() > 0.5 ? "horizontally" : "vertically";
+  const numDivisions = Math.random() * 2 + 1;
+
+  const planters = [];
+
+  //Setup planters
+  if (divide == "horizontally") {
+    const spaceEach = W / numDivisions;
+    for (var i =0; i<numDivisions; i++) {
+      let mw = spaceEach;
+      planters.push( {
+        w: mw,
+        h: H,
+        x: spaceEach * i,
+        h: 0,
+        flower: [ flower(mw, H) ]
+      })
+      
+    }
+  } else {
+    const spaceEach = H / numDivisions;
+    for (var i =0; i<numDivisions; i++) {
+      let mh = spaceEach;
+      planters.push( {
+        w: W,
+        h: mh,
+        x: 0,
+        h: spaceEach * i,
+        flower: [ flower(W, mh) ]
+      })
+    }
+  }
+
+  //Add plants to planters
+  return planters;
+  
+}
 
 //from: https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
 function ccw(A,B,C){

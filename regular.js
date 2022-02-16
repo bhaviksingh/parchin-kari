@@ -1,5 +1,5 @@
 const regular = (p) => {
-  let a1;
+  let f1;
 
   let W = Math.random() * 400 + 200;
   let H = Math.random() * 400 + 200;
@@ -14,7 +14,7 @@ const regular = (p) => {
 
   p.setup = () => {
     p.createCanvas(W, H);
-    a1 = algo(W, H, M, SPACING);
+    f1 = plant(W, H, M, SPACING);
     iterate();
     p.background(255, 255, 255);
     p.rectMode(p.CENTER);
@@ -57,7 +57,7 @@ const regular = (p) => {
 
   function iterate() {
     //console.log("iterating")
-    const generatedLeaves = a1();
+    const generatedLeaves = f1();
     currentLeaves = generatedLeaves.all;
     newLeaves = generatedLeaves.new;
     //console.log(currentLeaves);
@@ -68,7 +68,7 @@ const regular = (p) => {
     iterate();
     if (p.key == "q") {
       p.background(255, 255, 255);
-      a1 = algo(W, H, M, SPACING);
+      f1 = plant(W, H, M, SPACING);
     }
   }
 };
