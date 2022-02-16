@@ -1,7 +1,10 @@
-//TYPES
+
 /* 
+*************
+   TYPES 
+*************
  node = { 
-  type: "F" for straight, "/" for start a branch, * for flower
+  type: "F" for straight, "/" for start a branch, * for flower, + for curve 
   x: xPos,
   y: yPos,
   angle: current angle at which node is moving (heading),
@@ -9,7 +12,15 @@
   branchN: What the branch # is 
   index: what index is the node along the branch 
   size?: size of flower 
+  flipped?: true if its a LEFT branch (useful for updating curve angles later)
+  curveAt?: static number generated for curve branches, deciding when they should start curving
  }
+
+*************
+DO AT SOME POINT 
+*************
+- Maybe use SPACING to FORCE the branches to be a certain distance apart. Eg: every "F" on home, subtract M/S and then when counter == 0 , you *can* draw... but you may not.
+- optimization: right now the curves are checking intersection with all branches -- not needed, can check every 2nd (other than first), because it should only intersect on "its side"
 */
 
 const DBG = true;
@@ -32,7 +43,7 @@ const algo = (W, H, M, SPACING) => {
   
   console.log("Initialized .... " +  MAX_INCREMENTS);
 
-  //Helpers
+  //******** Helpers
   const makeNode = (override, node) => {
     return {
       ...node,
@@ -48,15 +59,52 @@ const algo = (W, H, M, SPACING) => {
       }
     }
   };
+  const captureCurvePoint = (node) => {
+    if (curvePoints[node.branchN] === undefined) {
+      //Capture the first point at which the node is curving
+      curvePoints[node.branchN] = node.index;
+    }
+  }
+  const makeStraightNode = (node) => {
+    return makeNode(
+      { x: node.x + M * Math.cos(node.angle), y: node.y + M * Math.sin(node.angle), index: node.index + 1 },
+      node
+    );
+  }
+  const makeFlowerNode = (node) => {
+    return makeNode({ type: "*", size: M }, node);
+  }
+  const makeCurvedNode = (node) => {
+    let curve = node.flipped ? -CURVE_INCREMENT : CURVE_INCREMENT;
+    curve = node.curveOpposite ? curve * -1 : curve;
+    let newNode = makeStraightNode(node); //continue this, and increase angle for next time.
+    return makeNode( { angle: node.angle + curve , type: "+" }, newNode);
+  }
+  const makeBranchedNode = (node, angle, {flipped, curveAt, curveOpposite}) => {
+    return makeNode(
+      {
+        type: "F",
+        index: 0,
+        branchN: branches.length,
+        branchD: node.branchD + 1,
+        angle,
+        flipped,
+        curveAt,
+        curveOpposite
+      },
+      node
+    );
+  };
+  
 
-  //Key variables
+  //******** Key variables
   let leafNodes = [
     makeNode({ x: W / 2, y: H - SPACING, angle: INIT_ANGLE, branchD: 0, branchN: 0, index: 0, type: "F" }, {}),
   ];
   const branches = [[...leafNodes]];
   const curvePoints = [undefined];
   
-  //Action
+  //******** Action
   const out = (n) => {
     if (n.x <= SPACING || n.x >= W - SPACING || n.y >= H - SPACING || n.y <= SPACING) {
       return true;
@@ -85,49 +133,21 @@ const algo = (W, H, M, SPACING) => {
       //What if it hits a curve? TODO: Use NN for this eventually..
     }
   }
-  function captureCurvePoint(node) {
-    if (curvePoints[node.branchN] === undefined) {
-      //Capture the first point at which the node is curving
-      curvePoints[node.branchN] = node.index;
-    }
-  }
-  const makeStraightNode = (node) => {
-    return makeNode(
-      { x: node.x + M * Math.cos(node.angle), y: node.y + M * Math.sin(node.angle), index: node.index + 1 },
-      node
-    );
-  }
-  const makeFlowerNode = (node) => {
-    return makeNode({ type: "*", size: M }, node);
-  }
-  const makeCurvedNode = (node) => {
-    let curve = node.flipped ? -CURVE_INCREMENT : CURVE_INCREMENT;
-    curve = node.curveOpposite ? curve * -1 : curve;
-    let newNode = makeStraightNode(node); //continue this, and increase angle for next time.
-    return makeNode( { angle: node.angle + curve , type: "+" }, newNode);
-  }
   const createNewNode = (node) => {
     if (node.type == "*") {
       return undefined;
     }
     if (node.type == "/") {
-      //When we meet a branch, we create two new nodes *at the branch spot* that then spawn nodes off it.
-      //This is done so that the branch contains its original spawn point as its first spot
-
-      //TODO There is likely a better algorithm for this -- that predicts on average how many indices there will be
+      //When we meet a branch, we create two new nodes, the spawn point and the first branch node, so the branch contains its spawn point
       let curveAt = (MAX_INCREMENTS/3) + ( (Math.random() * 0.5) * MAX_INCREMENTS);
-
       let curveOpposite = Math.random() > 0.5; 
-
-      let lNode = createBranchedNode(node, node.angle + BRANCH_ANGLE, {curveAt, curveOpposite});
+      let lNode = makeBranchedNode(node, node.angle + BRANCH_ANGLE, {curveAt, curveOpposite});
       addToBranch(lNode);
       let lNext = createNewNode(lNode);
-
-      let rNode = createBranchedNode(node, node.angle - BRANCH_ANGLE, {flipped: true, curveAt, curveOpposite});
+      let rNode = makeBranchedNode(node, node.angle - BRANCH_ANGLE, {flipped: true, curveAt, curveOpposite});
       addToBranch(rNode);
       let rNext = createNewNode(rNode);
-
-      return [...lNext, ...rNext];
+      return [...lNext, ...rNext]; //we only return the new nodes as these are the "leaves" 
     }
     let newNode;
     if (node.type == "F") {
@@ -141,8 +161,7 @@ const algo = (W, H, M, SPACING) => {
         newNode = makeCurvedNode(node);
         console.log("Creating curved node", newNode);
       }
-    }
-    else if (node.type == "+") {
+    } else if (node.type == "+") {
       newNode = makeCurvedNode(node);
       if (out(newNode) || intersectsCurve(node, newNode)){
         newNode = makeFlowerNode(node);
@@ -151,22 +170,9 @@ const algo = (W, H, M, SPACING) => {
     addToBranch(newNode);
     return [newNode];
   };
-  const createBranchedNode = (node, angle, {flipped, curveAt, curveOpposite}) => {
-    return makeNode(
-      {
-        type: "F",
-        index: 0,
-        branchN: branches.length,
-        branchD: node.branchD + 1,
-        angle,
-        flipped,
-        curveAt,
-        curveOpposite
-      },
-      node
-    );
-  };
 
+
+  //Main function. Acts as public iterator to move things along
   const addLeaf = () => {
     let newLeaves = [];
 
@@ -177,8 +183,6 @@ const algo = (W, H, M, SPACING) => {
         // console.log("Continuing node");
         newLeaves.push(...continuedNodes);
       }
-    
-
       //Some nodes get a chance to branch
       if (Math.random() < BRANCH_PROBABILITY && node.branchD < MAX_DEPTH) {
         // console.log("Creating branches");
@@ -205,3 +209,4 @@ function ccw(A,B,C){
 function lineoverlap(A,B,C,D) {
   return ccw(A,C,D) != ccw(B,C,D) && ccw(A,B,C) != ccw(A,B,D)
 }
+ 
