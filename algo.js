@@ -14,7 +14,18 @@
   size?: size of flower 
   flipped?: true if its a LEFT branch (useful for updating curve angles later)
   curveAt?: static number generated for curve branches, deciding when they should start curving
+  color?: What thec color of the flower is (PLACEHOLDER FOR FLOWER TYPE)
  }
+ plant(W,H,M,SPACING)
+  => iterator...  () => { all: all nodes, new: new nodes }  <-- iterates plants, giving leaves
+ planter = {
+   x,y,w,h,
+   hasBorder
+   plant: the ONE plant that this planter contains
+   leaves: All the leaves of the plant.... //TODO: CAN probably simplify this..
+ }
+ garden(W,H,M,SPACING) 
+  => iterate... () => planter[] <-- iterates each plant in each garden, updating the data structure
 
 *************
 DO AT SOME POINT 
@@ -219,10 +230,11 @@ const garden = (W,H, M, SPACING) => {
       planters.push( {
         w: mw,
         h: H,
-        x: spaceEach * i,
+        x: spaceEach * i ,
         y: 0,
-        plant: [ plant(mw, H, M, SPACING) ],
-        leaves: []
+        plant: plant(mw, H, M, SPACING) ,
+        leaves: [],
+        hasBorder: true
       })
       
     }
@@ -234,22 +246,23 @@ const garden = (W,H, M, SPACING) => {
         w: W,
         h: mh,
         x: 0,
-        y: spaceEach * i,
-        plant: [ plant(W, mh, M, SPACING) ],
-        leaves: []
+        y: spaceEach * i ,
+        plant: plant(W, mh, M, SPACING) ,
+        leaves: [],
+        hasBorder: true
       })
     }
   }
 
-  //Add plants to planters
-  const getLeaves = () => {
+  //For each planter, iterate the plants
+  const iterate = () => {
     planters.forEach((planter) => {
-      planter.leaves = planter.plant.map(f => f());
+      planter.leaves = planter.plant();
     });
 
     return planters;
   }
-  return getLeaves;
+  return iterate;
 }
 
 //from: https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
