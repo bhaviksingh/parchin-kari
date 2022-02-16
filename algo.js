@@ -204,10 +204,10 @@ const plant = (W, H, M, SPACING) => {
 };
 
 
-const garden = (W,H) => {
+const garden = (W,H, M, SPACING) => {
 
   const divide = Math.random() > 0.5 ? "horizontally" : "vertically";
-  const numDivisions = Math.random() * 2 + 1;
+  const numDivisions = Math.floor(Math.random() * 2 + 1);
 
   const planters = [];
 
@@ -220,8 +220,9 @@ const garden = (W,H) => {
         w: mw,
         h: H,
         x: spaceEach * i,
-        h: 0,
-        flower: [ flower(mw, H) ]
+        y: 0,
+        plant: [ plant(mw, H, M, SPACING) ],
+        leaves: []
       })
       
     }
@@ -233,15 +234,22 @@ const garden = (W,H) => {
         w: W,
         h: mh,
         x: 0,
-        h: spaceEach * i,
-        flower: [ flower(W, mh) ]
+        y: spaceEach * i,
+        plant: [ plant(W, mh, M, SPACING) ],
+        leaves: []
       })
     }
   }
 
   //Add plants to planters
-  return planters;
-  
+  const getLeaves = () => {
+    planters.forEach((planter) => {
+      planter.leaves = planter.plant.map(f => f());
+    });
+
+    return planters;
+  }
+  return getLeaves;
 }
 
 //from: https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
