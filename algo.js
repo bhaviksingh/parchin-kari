@@ -11,6 +11,7 @@
   branchD: how "deep" the branches are (how many times it has been "branched" from the root),
   branchN: What the branch # is 
   index: what index is the node along the branch 
+  magnitude: what is the magnitude of the vector 
   size?: size of flower 
   flipped?: true if its a LEFT branch (useful for updating curve angles later)
   curveAt?: static number generated for curve branches, deciding when they should start curving
@@ -41,6 +42,11 @@ const ld = (msg, ...args) => {
     console.log(msg, args);
   }
 };
+  
+const nextXY = (node) => {
+  return { x: node.x + node.magnitude * Math.cos(node.angle), y: node.y + node.magnitude * Math.sin(node.angle) };
+}
+
 const plant = (W, H, M, SPACING) => {
   const BRANCH_PROBABILITY = 0.2;
   const MAX_DEPTH = 1;
@@ -48,6 +54,8 @@ const plant = (W, H, M, SPACING) => {
   const BRANCH_ANGLE = 0.30 * Math.PI;
   const CURVE_INCREMENT = 0.1 * Math.PI;
   const MICRO_CURVE = 0.01 * Math.PI;
+
+  let firstRun = true;
 
   const ANGLED_LENGTH = ((W/2)-M) / Math.cos(BRANCH_ANGLE);
   const MAX_INCREMENTS = Math.floor(ANGLED_LENGTH/M)  ;
@@ -80,7 +88,7 @@ const plant = (W, H, M, SPACING) => {
   }
   const makeStraightNode = (node) => {
     return makeNode(
-      { x: node.x + M * Math.cos(node.angle), y: node.y + M * Math.sin(node.angle), index: node.index + 1 },
+      {index: node.index + 1, ...nextXY(node) },
       node
     );
   }
@@ -108,11 +116,10 @@ const plant = (W, H, M, SPACING) => {
       node
     );
   };
-  
 
   //******** Key variables
   let leafNodes = [
-    makeNode({ x: W / 2, y: H - SPACING, angle: INIT_ANGLE, branchD: 0, branchN: 0, index: 0, type: "F" }, {}),
+    makeNode({ x: W / 2, y: H - SPACING, angle: INIT_ANGLE, branchD: 0, branchN: 0, index: 0, type: "F", magnitude: M }, {}),
   ];
   const branches = [[...leafNodes]];
   const curvePoints = [undefined];
@@ -154,6 +161,7 @@ const plant = (W, H, M, SPACING) => {
       return undefined;
     }
     if (node.type == "/" ) {
+      console.log("Creating branched node");
       //When we meet a branch, we create two new nodes, the spawn point and the first branch node, so the branch contains its spawn point
       let curveAt = (MAX_INCREMENTS/3) + ( (Math.random() * 0.5) * MAX_INCREMENTS);
       let curveOpposite = Math.random() > 0.5; 
@@ -171,8 +179,7 @@ const plant = (W, H, M, SPACING) => {
       if (out(newNode) ) {
         captureCurvePoint(node);
         newNode = makeFlowerNode(node);
-      }
-      if (node.curveAt && node.index > node.curveAt){
+      } else if (node.curveAt && node.index > node.curveAt){
         captureCurvePoint(node);
         newNode = makeCurvedNode(node);
         ld("Creating curved node", newNode);
@@ -193,9 +200,17 @@ const plant = (W, H, M, SPACING) => {
 
   //Main function. Acts as public iterator to move things along
   const addLeaf = () => {
+    if (firstRun) {
+      firstRun = false;
+      return {new: leafNodes, all: branches};
+    }
     let newLeaves = [];
 
-    leafNodes.forEach((node) => {
+    //The leaf nodes are actually ONLY the last node on each branch, because leafNodes sometimes contains extra nodes at branchpoints
+    branches.forEach((branch) => {
+
+      let node = branch[branch.length - 1];
+
       //Every node gets a chance to continue growing
       const continuedNodes = createNewNode(node);
       if (continuedNodes) {
@@ -213,6 +228,7 @@ const plant = (W, H, M, SPACING) => {
      
     });
     leafNodes = newLeaves;
+    console.log("Iterated, returning nodes new/all", leafNodes, branches);
     return { new: leafNodes, all: branches };
   };
 

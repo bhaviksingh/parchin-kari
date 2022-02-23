@@ -58,6 +58,7 @@ const sketchFactory = (drawHelper) => {
     const bgColor = gP.bgColor || [30, 5, 90];
     const ANIMATE = gP.ANIMATE;
     const GHOST = gP.GHOST;
+    
 
     let myGarden;
 
@@ -71,6 +72,7 @@ const sketchFactory = (drawHelper) => {
 
     p.draw = () => {
       if (GHOST) p.background(...bgColor, 10);
+    
 
       const allFrames = myGarden.getPlanters();
 
@@ -85,7 +87,7 @@ const sketchFactory = (drawHelper) => {
         allBranches.forEach((branch) => {
           let currentLeaf = branch[branch.length - 1];
           let prevLeaf = branch[branch.length - 2];
-          if(drawHelper.drawBranch) {
+          if(drawHelper.drawBranch && prevLeaf) {
             drawHelper.drawBranch(p, currentLeaf, prevLeaf);
           }
         });
