@@ -32,7 +32,7 @@ const createGarden = (W, H, M, SPACING) => {
 
   //Given a planter ID, returns just the necessary leaves
   const getCurrentLeaves = (i) => {
-    return planters[i].leaves.current;
+    return planters[i].leaves.new;
   };
 
   iterate();
@@ -66,7 +66,6 @@ const sketchFactory = (drawHelper) => {
       myGarden = createGarden(W, H, M, SPACING);
       p.rectMode(p.CENTER);
       p.colorMode(p.HSB, 360, 100, 100, 100);
-      console.log(bgColor)
       p.background(...bgColor);
     };
 
@@ -86,8 +85,19 @@ const sketchFactory = (drawHelper) => {
         allBranches.forEach((branch) => {
           let currentLeaf = branch[branch.length - 1];
           let prevLeaf = branch[branch.length - 2];
-          drawHelper.drawBranch(p, currentLeaf, prevLeaf);
+          if(drawHelper.drawBranch) {
+            drawHelper.drawBranch(p, currentLeaf, prevLeaf);
+          }
         });
+
+        //This function is kinda broken - because we're drawing "one ahead" (eg: the first node is never even returned here)
+        const newLeaves = myGarden.getCurrentLeaves(i);
+        newLeaves.forEach((newLeaf) => {
+          if(drawHelper.drawLeaf) {
+            drawHelper.drawLeaf(p, newLeaf);
+         } 
+        })
+
         p.pop();
       });
       if (ANIMATE && p.frameCount % 5 == 0) {

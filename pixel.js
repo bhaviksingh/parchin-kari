@@ -7,7 +7,7 @@ const pixelDefaultParams =
   M: 20,
   SPACING: 20,
   bgColor: [30, 5, 90],
-  ANIMATE: true,
+  ANIMATE: true && !MINIMAL_MODE,
   GHOST: false
 }
 class PixelDraw {

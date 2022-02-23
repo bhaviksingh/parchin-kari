@@ -8,7 +8,7 @@ const lineDefaultParams =
   M: 10,
   SPACING: 15,
   bgColor: [30, 0, 100],
-  ANIMATE: true,
+  ANIMATE: true && !MINIMAL_MODE,
   GHOST: false
 }
 class LineDraw {

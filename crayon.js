@@ -1,0 +1,89 @@
+
+
+
+const crayonDefaultParams = 
+{
+  W: 600,
+  H: 600,
+  M: 10,
+  SPACING: 15,
+  bgColor: [30, 0, 100],
+  ANIMATE: true && !MINIMAL_MODE,
+  GHOST: false
+}
+class crayonDraw {
+  constructor(overrideParams) {
+    this.params = {
+      ...crayonDefaultParams,
+      ...overrideParams
+    }
+  }
+  drawFrame = (p, frame) => {
+    p.strokeWeight(1);
+    p.stroke(this.params.bgColor[0], this.params.bgColor[1], this.params.bgColor[2]/2, 100);
+    p.noFill();
+    p.rect(frame.x + frame.w / 2, frame.y + frame.h / 2, frame.w, frame.h);
+  };
+  drawLeaf = (p, cl) => {
+   
+  }
+  drawBranch = (p, cl, pl) => {
+    if (cl.type == "*") {
+      p.strokeWeight(1);
+      p.fill(cl.color || "yellow");
+      p.rect(cl.x, cl.y, cl.size, cl.size);
+    }else {
+      // //As a line
+      // p.stroke("#eeeeee");
+      // p.line( cl.x, cl.y, cl.x + this.params.M * Math.cos(cl.angle), cl.y + this.params.M * Math.sin(cl.angle));
+
+      // //As a point            
+      // p.fill("black");
+      // p.ellipse(cl.x, cl.y, 3);
+
+
+
+      //As a subdivided line, randomly vibing (changes ever y frame)0
+      let its = 5;
+      let amt = (this.params.M ) / its;
+      let deviation = 15;
+      
+      p.strokeWeight(1);
+      for (let i = 0 ; i < its ; i++) {
+        let cx = cl.x  + p.random(-deviation, deviation) * Math.cos(cl.angle + Math.PI/2) + amt * i *  Math.cos(cl.angle) ;
+        let cy = cl.y   + p.random(-deviation, deviation) * Math.sin(cl.angle + Math.PI/2) +  amt * i * Math.sin(cl.angle );
+        if (i == 0 )
+          p.stroke("yellow");
+        else if (i == its - 1) 
+          p.stroke("red");
+        else
+          p.stroke("black");
+        p.point(cx, cy);
+      }
+
+ 
+      // p.stroke("black");
+      // p.strokeWeight(1);
+      // if (Math.random() < 0.5) {
+      //   p.fill("rgb(0,255,0)");
+      // } else {
+      //   p.fill("yellow");
+      // }
+      // p.beginShape();
+      // for (let i = 0 ; i <= its ; i++) {
+      //   let cx = cl.x  + p.random(-deviation, deviation) * Math.cos(cl.angle + Math.PI/2) + amt * i *  Math.cos(cl.angle) ;
+      //   let cy = cl.y   + p.random(-deviation, deviation) * Math.sin(cl.angle + Math.PI/2) +  amt * i * Math.sin(cl.angle );  
+      //   p.vertex(cx, cy);
+      // }
+      // p.endShape();
+    }
+  };
+}
+
+const crayonDrawer = new crayonDraw();
+const crayonSketch = sketchFactory(crayonDrawer);
+const crayonp5 = new p5(crayonSketch);
+
+const crayonDrawerSpaced = new crayonDraw({M: 20, SPACING: 25});
+const crayonSketchSpaced = sketchFactory(crayonDrawerSpaced);
+const crayonp5Spaced = new p5(crayonSketchSpaced);
