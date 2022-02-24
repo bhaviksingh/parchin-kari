@@ -1,4 +1,3 @@
-
 /* 
 *************
    TYPES 
@@ -42,27 +41,25 @@ const ld = (msg, ...args) => {
     console.log(msg, args);
   }
 };
-  
+
 const nextXY = (node) => {
   return { x: node.x + node.magnitude * Math.cos(node.angle), y: node.y + node.magnitude * Math.sin(node.angle) };
-}
+};
 
 const plant = (W, H, M, SPACING) => {
   const BRANCH_PROBABILITY = 0.2;
   const MAX_DEPTH = 1;
-  const INIT_ANGLE = 1.5 *  Math.PI;
-  const BRANCH_ANGLE = 0.30 * Math.PI;
+  const INIT_ANGLE = 1.5 * Math.PI;
+  const BRANCH_ANGLE = 0.3 * Math.PI;
   const CURVE_INCREMENT = 0.1 * Math.PI;
   const MICRO_CURVE = 0.01 * Math.PI;
 
-  let firstRun = true;
-
-  const ANGLED_LENGTH = ((W/2)-M) / Math.cos(BRANCH_ANGLE);
-  const MAX_INCREMENTS = Math.floor(ANGLED_LENGTH/M)  ;
+  const ANGLED_LENGTH = (W / 2 - M) / Math.cos(BRANCH_ANGLE);
+  const MAX_INCREMENTS = Math.floor(ANGLED_LENGTH / M);
 
   //const MAX_INCREMENTS = 2;
-  
-  ld("Algorithm initialized with MAX_INCREMENTS at .... " +  MAX_INCREMENTS);
+
+  ld("Algorithm initialized with MAX_INCREMENTS at .... " + MAX_INCREMENTS);
 
   //******** Helpers
   const makeNode = (override, node) => {
@@ -80,28 +77,19 @@ const plant = (W, H, M, SPACING) => {
       }
     }
   };
-  const captureCurvePoint = (node) => {
-    if (curvePoints[node.branchN] === undefined) {
-      //Capture the first point at which the node is curving
-      curvePoints[node.branchN] = node.index;
-    }
-  }
-  const makeStraightNode = (node) => {
-    return makeNode(
-      {index: node.index + 1, ...nextXY(node) },
-      node
-    );
-  }
-  const makeFlowerNode = (node) => {
-    return makeNode({ type: "*", size: M }, node);
-  }
-  const makeCurvedNode = (node) => {
+  const makeStraightNode = (node, startXY) => {
+    return makeNode({ index: node.index + 1, ...startXY }, node);
+  };
+  const makeFlowerNode = (node, startXY) => {
+    return makeNode({ type: "*", size: M, ...startXY }, node);
+  };
+  const makeCurvedNode = (node, startXY) => {
     let curve = node.flipped ? -CURVE_INCREMENT : CURVE_INCREMENT;
     curve = node.curveOpposite ? curve * -1 : curve;
-    let newNode = makeStraightNode(node); //continue this, and increase angle for next time.
-    return makeNode( { angle: node.angle + curve , type: "+" }, newNode);
-  }
-  const makeBranchedNode = (node, angle, {flipped, curveAt, curveOpposite}) => {
+    let newNode = makeStraightNode(node, startXY); //continue this, and increase angle for next time.
+    return makeNode({ angle: node.angle + curve, type: "+" }, newNode);
+  };
+  const makeBranchedNode = (node, angle, { flipped, curveAt, curveOpposite }) => {
     return makeNode(
       {
         type: "F",
@@ -111,7 +99,7 @@ const plant = (W, H, M, SPACING) => {
         angle,
         flipped,
         curveAt,
-        curveOpposite
+        curveOpposite,
       },
       node
     );
@@ -119,125 +107,132 @@ const plant = (W, H, M, SPACING) => {
 
   //******** Key variables
   let leafNodes = [
-    makeNode({ x: W / 2, y: H - SPACING, angle: INIT_ANGLE, branchD: 0, branchN: 0, index: 0, type: "F", magnitude: M }, {}),
+    makeNode(
+      { x: W / 2, y: H - SPACING, angle: INIT_ANGLE, branchD: 0, branchN: 0, index: 0, type: "F", magnitude: M },
+      {}
+    ),
   ];
   const branches = [[...leafNodes]];
-  const curvePoints = [undefined];
-  
+
   //******** Action
-  const out = (n) => {
-    if (n.x <= SPACING || n.x >= W - SPACING || n.y >= H - SPACING || n.y <= SPACING) {
+  const out = ({ x, y }) => {
+    if (x <= SPACING || x >= W - SPACING || y >= H - SPACING || y <= SPACING) {
       return true;
     } else {
       return false;
     }
   };
-  const intersectsCurve = (n, nn) => {
-    const myAngle = n.angle - INIT_ANGLE + (n.flipped ? BRANCH_ANGLE : -1 * BRANCH_ANGLE);
+  const overcurved = (type, angle, flipped) => {
+    if (type !== "+") {
+      return false;
+    }
+    const myAngle = angle - INIT_ANGLE + (flipped ? BRANCH_ANGLE : -1 * BRANCH_ANGLE);
     if (myAngle && Math.abs(myAngle) > 0.9 * Math.PI) {
       //console.log("Stopping at ", myAngle / Math.PI);
       return true;
     }
- 
-    //Simply checks if the line about to be created (n -> nn) intersects literally any other line in the system.... 
+  };
+  const intersectsplant = (type, n, nn) => {
+    //Right now straight lines shouldnt curve, may change
+    if (n.type !== "+") {
+      return false;
+    }
+    //Simply checks if the line about to be created (n -> nn) intersects literally any other line in the system....
     //TODO: Can optimize this a TON (by checking the lines that are *straight* in one go (0->curvePoint) and also naive quadtrees)
-    const myLine = [{x: n.x, y: n.y}, {x: nn.x, y: nn.y}];
-    for (var i =0; i<branches.length; i++) {
-      for (var j= 0; j < branches[i].length - 1; j++) {
-        if ( i == n.branchN) 
-         continue;
+    for (var i = 0; i < branches.length; i++) {
+      for (var j = 0; j < branches[i].length - 1; j++) {
+        if (i == n.branchN) continue;
         let b0 = branches[i][j];
-        let bn = branches[i][j+1];
-        let branchLine = [{x: b0.x, y: b0.y} , {x: bn.x, y: bn.y}];
-        if (lineoverlap(myLine[0], myLine[1], branchLine[0], branchLine[1])) {
+        let bn = branches[i][j + 1];
+        let branchLine = [
+          { x: b0.x, y: b0.y },
+          { x: bn.x, y: bn.y },
+        ];
+        if (lineoverlap(n, nn, branchLine[0], branchLine[1])) {
           ld(`Branch ${n.branchN} intersects with branch ${i} at ${j}`, myLine, branchLine, branches);
           return true;
-        } 
+        }
       }
     }
-  }
-  const createNewNode = (node) => {
+  };
+  const extendNode = (node) => {
     if (node.type == "*") {
-      return undefined;
+      return; //This branch is finished, there is a flower here now.
     }
-    if (node.type == "/" ) {
-      console.log("Creating branched node");
-      //When we meet a branch, we create two new nodes, the spawn point and the first branch node, so the branch contains its spawn point
-      let curveAt = (MAX_INCREMENTS/3) + ( (Math.random() * 0.5) * MAX_INCREMENTS);
-      let curveOpposite = Math.random() > 0.5; 
-      let lNode = makeBranchedNode(node, node.angle + BRANCH_ANGLE, {curveAt, curveOpposite});
-      addToBranch(lNode);
-      let lNext = createNewNode(lNode);
-      let rNode = makeBranchedNode(node, node.angle - BRANCH_ANGLE, {flipped: true, curveAt, curveOpposite});
-      addToBranch(rNode);
-      let rNext = createNewNode(rNode);
-      return [lNode, ...lNext, rNode, ...rNext]; //we only return the new nodes as these are the "leaves" 
+    let nextStart = nextXY(node);
+    let nextEnd = nextXY({ x: nextStart.x, y: nextStart.y });
+    //check: endpoint of next vector OOB / angle of vector over curved / next vector intersects plant
+    if (
+      out(nextStart) ||
+      overcurved(node.type, node.angle, node.flipped) ||
+      intersectsplant(node.type, nextStart, nextEnd)
+    ) {
+      let newNode = makeFlowerNode(node);
+      addToBranch(newNode);
+      return [newNode];
     }
-    let newNode;
     if (node.type == "F") {
-      newNode = makeStraightNode(node);
-      if (out(newNode) ) {
-        captureCurvePoint(node);
-        newNode = makeFlowerNode(node);
-      } else if (node.curveAt && node.index > node.curveAt){
-        captureCurvePoint(node);
-        newNode = makeCurvedNode(node);
-        ld("Creating curved node", newNode);
+      let newNodes = [];
+      //Continues!
+      if (node.curveAt !== undefined && node.index > node.curveAt) {
+        let firstCurve = makeCurvedNode(node, nextStart);
+        addToBranch(firstCurve);
+        newNodes.push(firstCurve);
+      } else {
+        let continuedNode = makeStraightNode(node, nextStart);
+        addToBranch(continuedNode);
+        newNodes.push(continuedNode);
+        //Can branch
+        if (node.branchD < MAX_DEPTH && Math.random() < BRANCH_PROBABILITY) {
+          let curveAt = MAX_INCREMENTS/3 + Math.floor(Math.random() * (MAX_INCREMENTS/2));
+          let curveOpposite = Math.random() > 0.5;
+          let lNode = makeBranchedNode(node, node.angle + BRANCH_ANGLE, { flipped: false, curveAt, curveOpposite });
+          addToBranch(lNode);
+          newNodes.push(lNode);
+          let rNode = makeBranchedNode(node, node.angle - BRANCH_ANGLE, { flipped: true, curveAt, curveOpposite });
+          addToBranch(rNode);
+          newNodes.push(rNode);
+          console.log("EYYYY BRANCHING COMPLETE", newNodes);
+        }
       }
-    } else if (node.type == "+") {
-      //TOOD: Can optimizie this by unbundling checks and doing more efficient ones first
-      newNode = makeCurvedNode(node);
-      let isOut = out(newNode);
-      let intersectsC = intersectsCurve(node, newNode);
-      if (isOut || intersectsC){
-        newNode = makeFlowerNode({...node, color: intersectsC ? "red" : "purple"});
-      }
+      return newNodes;
     }
-    addToBranch(newNode);
-    return [newNode];
+    if (node.type == "+") {
+      let continuedNode = makeCurvedNode(node, nextStart);
+      addToBranch(continuedNode);
+      return [continuedNode];
+    }
   };
 
-
-  //Main function. Acts as public iterator to move things along
-  const addLeaf = () => {
+  //Main function.
+  let firstRun = true;
+  const grow = () => {
+    //Initial seed
     if (firstRun) {
       firstRun = false;
-      return {new: leafNodes, all: branches};
+      ld("Initial state", branches);
+      return { all: branches, new: branches[0] };
     }
+    //Now, for each branch, we grow
     let newLeaves = [];
+    let bClone = [...branches]; //clone, because it can change mid for loop
+    for (let i = 0; i < bClone.length; i++) {
+      let branch = bClone[i];
+      let lastNode = branch[branch.length - 1];
+      let newNodes = extendNode(lastNode);
 
-    //The leaf nodes are actually ONLY the last node on each branch, because leafNodes sometimes contains extra nodes at branchpoints
-    branches.forEach((branch) => {
-
-      let node = branch[branch.length - 1];
-
-      //Every node gets a chance to continue growing
-      const continuedNodes = createNewNode(node);
-      if (continuedNodes) {
-        // console.log("Continuing node");
-        newLeaves.push(...continuedNodes);
+      if (newNodes) {
+        newLeaves.push(...newNodes);
       }
-      //Some nodes get a chance to branch
-      if (Math.random() < BRANCH_PROBABILITY && node.branchD < MAX_DEPTH) {
-        // console.log("Creating branches");
-        let newNodes = createNewNode({ ...node, type: "/" });
-        if (newNodes) {
-          newLeaves.push(...newNodes);
-        }
-      }  
-     
-    });
-    leafNodes = newLeaves;
-    console.log("Iterated, returning nodes new/all", leafNodes, branches);
-    return { new: leafNodes, all: branches };
+    }
+    ld("Growing", branches, newLeaves);
+    return { all: branches, new: newLeaves };
   };
 
-  return addLeaf;
+  return grow;
 };
 
-
-const garden = (W,H, M, SPACING) => {
-
+const garden = (W, H, M, SPACING) => {
   const divide = Math.random() > 0.5 ? "horizontally" : "vertically";
   const numDivisions = MINIMAL_MODE ? 1 : Math.floor(Math.random() * 2 + 1);
 
@@ -246,32 +241,31 @@ const garden = (W,H, M, SPACING) => {
   //Setup planters
   if (divide == "horizontally") {
     const spaceEach = W / numDivisions;
-    for (var i =0; i<numDivisions; i++) {
+    for (var i = 0; i < numDivisions; i++) {
       let mw = spaceEach;
-      planters.push( {
+      planters.push({
         w: mw,
         h: H,
-        x: spaceEach * i ,
+        x: spaceEach * i,
         y: 0,
-        plant: plant(mw, H, M, SPACING) ,
+        plant: plant(mw, H, M, SPACING),
         leaves: [],
-        hasBorder: true
-      })
-      
+        hasBorder: true,
+      });
     }
   } else {
     const spaceEach = H / numDivisions;
-    for (var i =0; i<numDivisions; i++) {
+    for (var i = 0; i < numDivisions; i++) {
       let mh = spaceEach;
-      planters.push( {
+      planters.push({
         w: W,
         h: mh,
         x: 0,
-        y: spaceEach * i ,
-        plant: plant(W, mh, M, SPACING) ,
+        y: spaceEach * i,
+        plant: plant(W, mh, M, SPACING),
         leaves: [],
-        hasBorder: true
-      })
+        hasBorder: true,
+      });
     }
   }
 
@@ -282,16 +276,15 @@ const garden = (W,H, M, SPACING) => {
     });
 
     return planters;
-  }
+  };
   return iterate;
-}
+};
 
 //from: https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
-function ccw(A,B,C){
-  return (C.y-A.y) * (B.x-A.x) > (B.y-A.y) * (C.x-A.x)
+function ccw(A, B, C) {
+  return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
 }
 
-function lineoverlap(A,B,C,D) {
-  return ccw(A,C,D) != ccw(B,C,D) && ccw(A,B,C) != ccw(A,B,D)
+function lineoverlap(A, B, C, D) {
+  return ccw(A, C, D) != ccw(B, C, D) && ccw(A, B, C) != ccw(A, B, D);
 }
- 

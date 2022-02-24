@@ -10,12 +10,10 @@ const crayonDefaultParams =
   bgColor: [30, 0, 100],
   ANIMATE: true && !MINIMAL_MODE,
 }
-class crayonDraw {
+class crayonDraw extends LineDraw {
   constructor(overrideParams) {
-    this.params = {
-      ...crayonDefaultParams,
-      ...overrideParams
-    }
+    super({});
+    this.params = {...crayonDefaultParams, ...overrideParams};
   }
   drawFrame = (p, frame) => {
     p.strokeWeight(1);
@@ -24,23 +22,9 @@ class crayonDraw {
     p.rect(frame.x + frame.w / 2, frame.y + frame.h / 2, frame.w, frame.h);
   };
   drawLeaf = (p, cl) => {
-   
-  }
-  drawBranch = (p, cl, pl) => {
     if (cl.type == "*") {
-      p.strokeWeight(1);
-      p.fill(cl.color || "yellow");
-      p.rect(cl.x, cl.y, cl.size, cl.size);
+      this.drawFlower(p, cl);
     }else {
-      // //As a line
-      // p.stroke("#eeeeee");
-      // p.line( cl.x, cl.y, cl.x + this.params.M * Math.cos(cl.angle), cl.y + this.params.M * Math.sin(cl.angle));
-
-      // //As a point            
-      // p.fill("black");
-      // p.ellipse(cl.x, cl.y, 3);
-
-
 
       //As a subdivided line, randomly vibing (changes ever y frame)0
       let its = 5;
@@ -125,6 +109,9 @@ class crayonDraw {
       // }
       // p.endShape();
     }
+  }
+  drawBranch = (p, cl, pl) => {
+  
   };
 }
 

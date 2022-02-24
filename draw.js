@@ -48,7 +48,6 @@ const createGarden = (W, H, M, SPACING) => {
 //p5.js creator, gP is gardenParams
 const sketchFactory = (drawHelper) => {
   return (p) => {
-
     const gP = drawHelper.params;
     console.log("Creating sketch", gP);
     const W = gP.W;
@@ -58,9 +57,9 @@ const sketchFactory = (drawHelper) => {
     const bgColor = gP.bgColor || [30, 5, 90];
     const ANIMATE = gP.ANIMATE;
     const GHOST = gP.GHOST;
-    
 
     let myGarden;
+    let drawn = false;
 
     p.setup = () => {
       p.createCanvas(W, H);
@@ -71,39 +70,44 @@ const sketchFactory = (drawHelper) => {
     };
 
     p.draw = () => {
-      if (GHOST) p.background(...bgColor, 10);
-    
-
-      const allFrames = myGarden.getPlanters();
-
-      allFrames.forEach((frame, i) => {
-        if (frame.hasBorder) {
-          drawHelper.drawFrame(p, frame);
-        }
-        p.push();
-        p.translate(frame.x, frame.y);
-        const allBranches = myGarden.getAllBranches(i);
-
-        allBranches.forEach((branch) => {
-          let currentLeaf = branch[branch.length - 1];
-          let prevLeaf = branch[branch.length - 2];
-          if(drawHelper.drawBranch && prevLeaf) {
-            drawHelper.drawBranch(p, currentLeaf, prevLeaf);
+      if (!drawn) {
+        drawn = true;
+        if (GHOST) p.background(...bgColor, 10);
+        const allFrames = myGarden.getPlanters();
+        allFrames.forEach((frame, i) => {
+          if (frame.hasBorder) {
+            drawHelper.drawFrame(p, frame);
           }
+          p.push();
+          p.translate(frame.x, frame.y);
+          const allBranches = myGarden.getAllBranches(i);
+          const newLeaves = myGarden.getCurrentLeaves(i);
+
+          if (newLeaves.length == 0) {
+            p.pop();
+            return;
+          }
+          allBranches.forEach((branch) => {
+            let currentLeaf = branch[branch.length - 1];
+            let prevLeaf = branch[branch.length - 2];
+            if (drawHelper.drawBranch && prevLeaf) {
+              drawHelper.drawBranch(p, currentLeaf, prevLeaf);
+            }
+          });
+
+          //This function is kinda broken - because we're drawing "one ahead" (eg: the first node is never even returned here)
+          newLeaves.forEach((newLeaf) => {
+            if (drawHelper.drawLeaf) {
+              drawHelper.drawLeaf(p, newLeaf);
+            }
+          });
+
+          p.pop();
         });
-
-        //This function is kinda broken - because we're drawing "one ahead" (eg: the first node is never even returned here)
-        const newLeaves = myGarden.getCurrentLeaves(i);
-        newLeaves.forEach((newLeaf) => {
-          if(drawHelper.drawLeaf) {
-            drawHelper.drawLeaf(p, newLeaf);
-         } 
-        })
-
-        p.pop();
-      });
+      }
       if (ANIMATE && p.frameCount % 5 == 0) {
         myGarden.iterate();
+        drawn = false;
       }
     };
 
@@ -112,8 +116,8 @@ const sketchFactory = (drawHelper) => {
         p.background(...bgColor);
         myGarden.reset();
       }
-
       myGarden.iterate();
+      drawn = false;
     };
   };
 };

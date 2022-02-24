@@ -6,7 +6,7 @@ const lineDefaultParams =
   W: 600,
   H: 600,
   M: 10,
-  SPACING: 15,
+  SPACING: 20,
   bgColor: [30, 0, 100],
   ANIMATE: true && !MINIMAL_MODE,
   GHOST: false
@@ -24,12 +24,19 @@ class LineDraw {
     p.noFill();
     p.rect(frame.x + frame.w / 2, frame.y + frame.h / 2, frame.w, frame.h);
   };
+  drawFlower = (p, cl) => {
+    p.fill("black");
+    p.push();
+    p.translate(cl.x, cl.y);
+    p.rotate(cl.angle);
+    
+    p.rect(0, 0, cl.magnitude * 2, cl.magnitude);
+    p.pop();
+  }
   drawLeaf = (p, cl) => {
-    return;
+    // return;
     if (cl.type == "*") {
-      p.fill("black");
-      p.ellipse(cl.x, cl.y, cl.size, cl.size);
-      return;
+      this.drawFlower(p, cl);
     }
     //Point
     p.fill(0,50,50);
@@ -43,22 +50,21 @@ class LineDraw {
 
   }
   drawBranch = (p, cl, pl) => {
-    // return;
+    return;
     p.strokeWeight(1);
     p.stroke("black");
     if (cl.type == "*") {
-      p.fill(cl.color || "yellow");
-      p.rect(cl.x, cl.y, cl.magnitude, cl.magnitude);
+      this.drawFlower(p,cl);
     } else {
       p.line(cl.x, cl.y, pl.x, pl.y);
     }
   };
 }
 
-// const lineDrawer = new LineDraw();
-// const lineSketch = sketchFactory(lineDrawer);
-// const linep5 = new p5(lineSketch);
+const lineDrawer = new LineDraw();
+const lineSketch = sketchFactory(lineDrawer);
+const linep5 = new p5(lineSketch);
 
-const lineDrawerSpaced = new LineDraw({M: 50, SPACING: 25});
-const lineSketchSpaced = sketchFactory(lineDrawerSpaced);
-const linep5Spaced = new p5(lineSketchSpaced);
+// const lineDrawerSpaced = new LineDraw({M: 50, SPACING: 25});
+// const lineSketchSpaced = sketchFactory(lineDrawerSpaced);
+// const linep5Spaced = new p5(lineSketchSpaced);
