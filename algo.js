@@ -42,12 +42,13 @@ const ld = (msg, ...args) => {
   }
 };
 
-const nextXY = (node) => {
-  return { x: node.x + node.magnitude * Math.cos(node.angle), y: node.y + node.magnitude * Math.sin(node.angle) };
+const nextXY = (node, m) => {
+  m = m || node.magnitude || 0;
+  return { x: node.x + m * Math.cos(node.angle), y: node.y + m * Math.sin(node.angle) };
 };
 
 //Note: this system assumes that UP is -Y axis, as is convention with graphics drawing systems
-const plant = (W, H, M, SPACING, SPACE_BETWEEN_BRANCHES) => {
+const plant = (W, H, M, SPACING, { SPACE_BETWEEN_BRANCHES, FLOWER_SIZE}) => {
   const BRANCH_PROBABILITY = 0.2;
   const MAX_DEPTH = 1;
   const INIT_ANGLE = -0.5 * Math.PI; 
@@ -84,7 +85,7 @@ const plant = (W, H, M, SPACING, SPACE_BETWEEN_BRANCHES) => {
     return makeNode({ index: node.index + 1, ...nextXY(node) }, node);
   };
   const makeFlowerNode = (node) => {
-    return makeNode({ type: "*", size: M, ...nextXY(node) }, node);
+    return makeNode({ type: "*", size: node.flowerSize || FLOWER_SIZE || M, ...nextXY(node) }, node);
   };
   const makeCurvedNode = (node) => {
     let curve = node.flipped ? -CURVE_INCREMENT : CURVE_INCREMENT;
@@ -92,7 +93,7 @@ const plant = (W, H, M, SPACING, SPACE_BETWEEN_BRANCHES) => {
     let newNode = makeStraightNode(node); //continue this, and increase angle for next time.
     return makeNode({ angle: node.angle + curve, type: "+" }, newNode);
   };
-  const makeBranchedNode = (node, angle, { flipped, curveAt, curveOpposite }) => {
+  const makeBranchedNode = (node, angle, { flipped, curveAt, curveOpposite, flowerSize }) => {
     return makeNode(
       {
         type: "F",
@@ -103,6 +104,7 @@ const plant = (W, H, M, SPACING, SPACE_BETWEEN_BRANCHES) => {
         flipped,
         curveAt,
         curveOpposite,
+        flowerSize
       },
       node
     );
@@ -130,7 +132,7 @@ const plant = (W, H, M, SPACING, SPACE_BETWEEN_BRANCHES) => {
       return false;
     }
     const myAngle = angle - INIT_ANGLE + (flipped ? BRANCH_ANGLE : -1 * BRANCH_ANGLE);
-    if (myAngle && Math.abs(myAngle) > 0.9 * Math.PI) {
+    if (myAngle && Math.abs(myAngle) > 0.60 * Math.PI) {
       //console.log("Stopping at ", myAngle / Math.PI);
       return true;
     }
@@ -162,13 +164,13 @@ const plant = (W, H, M, SPACING, SPACE_BETWEEN_BRANCHES) => {
     if (node.type == "*") {
       return; //This branch is finished, there is a flower here now.
     }
-    let nextStart = nextXY(node);
-    let nextEnd = nextXY({ x: nextStart.x, y: nextStart.y });
-    //check: endpoint of next vector OOB / angle of vector over curved / next vector intersects plant
+    let flowerStart = nextXY(node,  M);
+    let flowerEnd = nextXY({ x: flowerStart.x, y: flowerStart.y, angle: node.angle}, node.flowerSize ? 3 * node.flowerSize : M);
+    //check: IF the node is overcurved, or drawing a flower here would send us out of bounds.
     if (
-      out(nextStart) ||
+      out(flowerStart) ||
       overcurved(node.type, node.angle, node.flipped) ||
-      intersectsplant(node.type, nextStart, nextEnd)
+      intersectsplant(node.type, flowerStart, flowerEnd)
     ) {
       let newNode = makeFlowerNode(node);
       addToBranch(newNode);
@@ -191,10 +193,11 @@ const plant = (W, H, M, SPACING, SPACE_BETWEEN_BRANCHES) => {
             dist_since_branch = 0; //TODO: needs to be an array eventually
             let curveAt = MAX_INCREMENTS/3 + Math.floor(Math.random() * (MAX_INCREMENTS/2));
             let curveOpposite = Math.random() > 0.5;
-            let rNode = makeBranchedNode(node, node.angle + BRANCH_ANGLE, { flipped: false, curveAt, curveOpposite });
+            let flowerSize = FLOWER_SIZE ? (Math.random() * 0.5 + 0.5) * FLOWER_SIZE : M;
+            let rNode = makeBranchedNode(node, node.angle + BRANCH_ANGLE, { flipped: false, curveAt, curveOpposite, flowerSize });
             addToBranch(rNode);
             newNodes.push(rNode);
-            let lNode = makeBranchedNode(node, node.angle - BRANCH_ANGLE, { flipped: true, curveAt, curveOpposite });
+            let lNode = makeBranchedNode(node, node.angle - BRANCH_ANGLE, { flipped: true, curveAt, curveOpposite, flowerSize });
             addToBranch(lNode);
             newNodes.push(lNode);
             ld("EYYYY BRANCHING COMPLETE", newNodes);
@@ -240,9 +243,9 @@ const plant = (W, H, M, SPACING, SPACE_BETWEEN_BRANCHES) => {
   return grow;
 };
 
-const garden = (W, H, M, SPACING) => {
+const garden = (W, H, M, SPACING, {SPACE_BETWEEN_BRANCHES, FLOWER_SIZE}) => {
   const divide = Math.random() > 0.5 ? "horizontally" : "vertically";
-  const numDivisions = MINIMAL_MODE ? 1 : Math.floor(Math.random() * 2 + 1);
+  const numDivisions = MINIMAL_MODE ? 1 : Math.floor( 1+ Math.random() * 2 + 1);
 
   const planters = [];
 
@@ -256,7 +259,7 @@ const garden = (W, H, M, SPACING) => {
         h: H,
         x: spaceEach * i,
         y: 0,
-        plant: plant(mw, H, M, SPACING),
+        plant: plant(mw, H, M, SPACING, {SPACE_BETWEEN_BRANCHES, FLOWER_SIZE}),
         leaves: [],
         hasBorder: true,
       });
@@ -270,7 +273,7 @@ const garden = (W, H, M, SPACING) => {
         h: mh,
         x: 0,
         y: spaceEach * i,
-        plant: plant(W, mh, M, SPACING),
+        plant: plant(W, mh, M, SPACING, {SPACE_BETWEEN_BRANCHES, FLOWER_SIZE}),
         leaves: [],
         hasBorder: true,
       });
@@ -282,7 +285,6 @@ const garden = (W, H, M, SPACING) => {
     planters.forEach((planter) => {
       planter.leaves = planter.plant();
     });
-
     return planters;
   };
   return iterate;
