@@ -17,57 +17,19 @@
 
   </script>
   <script src="algo.js"></script>
+  <script src="paper/paperPlant.js"></script>
   <script>
-    const step = 10;
-    const plantGrow = plant(600, 600, 10, 20, 50);
-    const gradient = new paper.Gradient(['black', 'grey']);
 
     window.onload = () => {
+
       let canvas = document.getElementById("paper-canvas");
       paper.setup(canvas);
 
-      let skeletonPaths = [];
-      let skinPaths = [];
-      let trunkGroup = new paper.Group();
-      let branchGroup = new paper.Group();
-      branchGroup.sendToBack();
-      const addNode = () => {
-        let iteration = plantGrow();
-        let newNodes = iteration.new;
-        if (newNodes.length == 0) return;
-        for (let i = 0; i < newNodes.length; i++) {
-          let node = newNodes[i];
-          if (node.type == "*"){
-            let sk = new paper.Path.Circle({x: node.x, y: node.y, radius: node.size, fillColor: 'yellow', strokeColor: 'black'});
-            continue;
-          }
-          let skel = skeletonPaths[node.branchN]
-          let skin = skinPaths[node.branchN];
-          if (skel == undefined) {
-            skel = new paper.Path();
-            skeletonPaths.push(skel);
-            skel.strokeColor = 'black';
-            skin = new paper.Path();
-            skinPaths.push(skin);
-            skin.strokeColor = 'black';
-            skin.closed = true;
-            let groupToAdd = node.branchN == 0 ? trunkGroup : branchGroup;
-            groupToAdd.addChild(skinPaths[node.branchN]);
-            groupToAdd.addChild(skeletonPaths[node.branchN]);
-          }
-          skel.add([node.x, node.y]);
-          let lPoint = [ node.x + step *  Math.cos(node.angle -Math.PI/2), node.y + step * Math.sin(node.angle -Math.PI/2) ];
-          let rPoint = [ node.x + step *  Math.cos(node.angle +Math.PI/2), node.y + step * Math.sin(node.angle + Math.PI/2) ];
-          skin.add(lPoint)
-          skin.insert(0, rPoint); 
-          skin.fillColor = new paper.Color(gradient, skel.firstSegment.point, skel.lastSegment.point);;
-        }
-
-      }
-
+      const plantGrow = plant(600, 600, 10, 20, 50);
+      let ppplant = new PaperPlant(plantGrow)
       paper.view.draw();
-      addNode()
-      setInterval(addNode, 100);
+      
+      setInterval(() => ppplant.drawPlant(), 100);
 
     }
   </script>
