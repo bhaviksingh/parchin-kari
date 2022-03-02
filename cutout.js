@@ -1,6 +1,6 @@
 
 
-const mw = 1200;
+const mw = 600;
 
 const cutoutDefaultParams = 
 {

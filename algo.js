@@ -46,16 +46,19 @@ const nextXY = (node) => {
   return { x: node.x + node.magnitude * Math.cos(node.angle), y: node.y + node.magnitude * Math.sin(node.angle) };
 };
 
-const plant = (W, H, M, SPACING) => {
+//Note: this system assumes that UP is -Y axis, as is convention with graphics drawing systems
+const plant = (W, H, M, SPACING, SPACE_BETWEEN_BRANCHES) => {
   const BRANCH_PROBABILITY = 0.2;
   const MAX_DEPTH = 1;
-  const INIT_ANGLE = 1.5 * Math.PI;
-  const BRANCH_ANGLE = 0.3 * Math.PI;
+  const INIT_ANGLE = -0.5 * Math.PI; 
+  const BRANCH_ANGLE = 0.25 * Math.PI;
   const CURVE_INCREMENT = 0.1 * Math.PI;
   const MICRO_CURVE = 0.01 * Math.PI;
 
   const ANGLED_LENGTH = (W / 2 - M) / Math.cos(BRANCH_ANGLE);
   const MAX_INCREMENTS = Math.floor(ANGLED_LENGTH / M);
+  let dist_since_branch = 0;
+  const BRANCH_SPACING = SPACE_BETWEEN_BRANCHES || SPACING;
 
   //const MAX_INCREMENTS = 2;
 
@@ -77,16 +80,16 @@ const plant = (W, H, M, SPACING) => {
       }
     }
   };
-  const makeStraightNode = (node, startXY) => {
-    return makeNode({ index: node.index + 1, ...startXY }, node);
+  const makeStraightNode = (node) => {
+    return makeNode({ index: node.index + 1, ...nextXY(node) }, node);
   };
-  const makeFlowerNode = (node, startXY) => {
-    return makeNode({ type: "*", size: M, ...startXY }, node);
+  const makeFlowerNode = (node) => {
+    return makeNode({ type: "*", size: M, ...nextXY(node) }, node);
   };
-  const makeCurvedNode = (node, startXY) => {
+  const makeCurvedNode = (node) => {
     let curve = node.flipped ? -CURVE_INCREMENT : CURVE_INCREMENT;
     curve = node.curveOpposite ? curve * -1 : curve;
-    let newNode = makeStraightNode(node, startXY); //continue this, and increase angle for next time.
+    let newNode = makeStraightNode(node); //continue this, and increase angle for next time.
     return makeNode({ angle: node.angle + curve, type: "+" }, newNode);
   };
   const makeBranchedNode = (node, angle, { flipped, curveAt, curveOpposite }) => {
@@ -175,30 +178,35 @@ const plant = (W, H, M, SPACING) => {
       let newNodes = [];
       //Continues!
       if (node.curveAt !== undefined && node.index > node.curveAt) {
-        let firstCurve = makeCurvedNode(node, nextStart);
+        let firstCurve = makeCurvedNode(node);
         addToBranch(firstCurve);
         newNodes.push(firstCurve);
       } else {
-        let continuedNode = makeStraightNode(node, nextStart);
+        let continuedNode = makeStraightNode(node);
         addToBranch(continuedNode);
         newNodes.push(continuedNode);
-        //Can branch
-        if (node.branchD < MAX_DEPTH && Math.random() < BRANCH_PROBABILITY) {
-          let curveAt = MAX_INCREMENTS/3 + Math.floor(Math.random() * (MAX_INCREMENTS/2));
-          let curveOpposite = Math.random() > 0.5;
-          let lNode = makeBranchedNode(node, node.angle + BRANCH_ANGLE, { flipped: false, curveAt, curveOpposite });
-          addToBranch(lNode);
-          newNodes.push(lNode);
-          let rNode = makeBranchedNode(node, node.angle - BRANCH_ANGLE, { flipped: true, curveAt, curveOpposite });
-          addToBranch(rNode);
-          newNodes.push(rNode);
-          console.log("EYYYY BRANCHING COMPLETE", newNodes);
+        if (node.branchD < MAX_DEPTH) {
+          dist_since_branch += node.magnitude;
+          if (dist_since_branch >= BRANCH_SPACING && Math.random() < BRANCH_PROBABILITY) {
+            dist_since_branch = 0; //TODO: needs to be an array eventually
+            let curveAt = MAX_INCREMENTS/3 + Math.floor(Math.random() * (MAX_INCREMENTS/2));
+            let curveOpposite = Math.random() > 0.5;
+            let rNode = makeBranchedNode(node, node.angle + BRANCH_ANGLE, { flipped: false, curveAt, curveOpposite });
+            addToBranch(rNode);
+            newNodes.push(rNode);
+            let lNode = makeBranchedNode(node, node.angle - BRANCH_ANGLE, { flipped: true, curveAt, curveOpposite });
+            addToBranch(lNode);
+            newNodes.push(lNode);
+            ld("EYYYY BRANCHING COMPLETE", newNodes);
+          }
         }
+        //Can branch
+      
       }
       return newNodes;
     }
     if (node.type == "+") {
-      let continuedNode = makeCurvedNode(node, nextStart);
+      let continuedNode = makeCurvedNode(node);
       addToBranch(continuedNode);
       return [continuedNode];
     }
