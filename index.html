@@ -4,7 +4,7 @@
   <link rel="stylesheet" href="style.css" />
   <script type="text/javascript" src="lib/paper-core.min.js"></script>
   <script>
-    var MINIMAL_MODE = false;
+    var MINIMAL_MODE = true;
     Math.radians = function (degrees) {
       return degrees * Math.PI / 180;
     }
@@ -30,9 +30,16 @@
 
       //setInterval(() => ppplant.drawPlant(), 100);
 
-      const gardenGrow = garden(800, 800, 8, 40, {SPACE_BETWEEN_BRANCHES: 80, FLOWER_SIZE: 80});
+      const gardenGrow = garden(800, 800, 20, 20, {SPACE_BETWEEN_BRANCHES: 120, FLOWER_SIZE: 40});
       const paperGarden = new PaperGarden(gardenGrow);
-      setInterval(() => paperGarden.drawGarden(), 100);
+      if (MINIMAL_MODE) {
+        window.addEventListener("keypress", () => paperGarden.drawGarden())
+      } else {
+        setInterval(() => paperGarden.drawGarden(), 100);
+      }
+      
+
+      
 
       // const plantGrow = plant(600, 600, 10, 20, 50);
       // let ppplant = new PaperPlant(plantGrow);
