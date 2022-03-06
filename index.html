@@ -30,7 +30,7 @@
 
       //setInterval(() => ppplant.drawPlant(), 100);
 
-      const gardenGrow = garden(800, 800, 8, 40, {SPACE_BETWEEN_BRANCHES: 80, FLOWER_SIZE: 20});
+      const gardenGrow = garden(800, 800, 8, 40, {SPACE_BETWEEN_BRANCHES: 80, FLOWER_SIZE: 80});
       const paperGarden = new PaperGarden(gardenGrow);
       setInterval(() => paperGarden.drawGarden(), 100);
 
@@ -57,12 +57,13 @@
       paper.setup(canvas2);
 
       new PaperPetal({ x: 400, y:200, size: 150, angle: -Math.PI/4});
-      new PaperPetal({ x: 300, y:200, size: 150, angle: -Math.PI/4, flatSide: true, curveIncrement: -0.1, curveAt: 0.8});
+      new PaperPetal({ x: 300, y:200, size: 150, angle: -Math.PI/4, flatSide: true, curveIncrementPetal: -0.1, curveAtPetal: 0.8});
       new PaperPetal({ x: 200, y:200, size: 32, width: 8, angle: -Math.PI/2});
-      new PaperPetal({ x: 100, y:200, size: 150, angle: -Math.PI/2 - Math.PI/4, flatSide: true, curveIncrement: 0.1, curveAt: 0.8, width: 10});
+      new PaperPetal({ x: 100, y:200, size: 150, angle: -Math.PI/2 - Math.PI/4, flatSide: true, curveIncrementPetal: 0.1, curveAtPetal: 0.8, width: 10});
 
 
       new PaperFlower({ x: 100, y:400, size: 80, angle: -Math.PI/2, color: "pink"});
+      new PaperFlower({ x: 100, y:420, size: 80, angle: Math.PI/2, color: "pink"});
       new PaperFlower({ x: 300, y:400, size: 90, angle: -Math.PI/2, petalArcAngle: 0.75 * Math.PI, numPetals: 5,  color: "yellow", showPistil: false, pistilSize: 0.1, width: 11});
 
       new PaperFlower({ x: 500, y:400, size: 90, angle: -Math.PI/2, petalArcAngle: 0.75 * Math.PI, numPetals: 4,  color: "yellow", showPistil: false, pistilSize: 0.1, width: 11});

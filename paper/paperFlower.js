@@ -2,7 +2,7 @@
 
 /*** 
  * PETAL
- * Expects in node: color, subdives, flatSide, curveIncrement, curveAt`
+ * Expects in node: color, subdives, flatSide, curveIncrementLeaf, curveAtLeaf`
  */
  class PaperPetal {
 
@@ -18,11 +18,11 @@
     this.subDivs = node.subdivs || 5;
     this.width = node.width ||  node.size / 10;
     this.flatSide = node.flatSide;
-    this.curveIncrement = node.curveIncrement || 0;
+    this.curveIncrement = node.curveIncrementPetal || 0;
 
-    let curveAtPercent = this.curveIncrement ? (node.curveAt !== undefined ? node.curveAt : 0.5) : 1.2;
+    let curveAtPercent = this.curveIncrement ? (node.curveAtPetal !== undefined ? node.curveAtPetal : 0.5) : 1.2;
     this.curveIndex = Math.floor(curveAtPercent * this.subDivs);
-    console.log(this);
+    //console.log(this);
     this.drawLeaf(); 
   }
 
@@ -37,7 +37,6 @@
     for (let i = 0; i <= subdivs; i++) {
       let step = Math.sin(i / subdivs * Math.PI) * this.width;
       let flangle = i >= this.curveIndex ? petalNode.angle + (i - this.curveIndex + 1) * this.curveIncrement : petalNode.angle;
-      console.log(this.curveIndex,  i - this.curveIndex + 1, flangle);
       let subpoint = nextXY({...petalNode, angle: flangle} , petalNode.size * (i / subdivs));
 
       skeleton.add([subpoint.x, subpoint.y]);
@@ -66,10 +65,11 @@ class PaperFlower {
     this.showPistil = node.showPistil == undefined ? true : node.showPistil ;
     this.myGroup = new paper.Group();
 
-    this.pistilSize = node.size * node.pistilSize || node.size  * 0.25;
-    this.numPetals = node.numPetals || 15;
-    this.petalArcAngle = node.petalArcAngle || Math.PI  *2;
+    this.pistilSize = node.size  * 0.25;
+    this.numPetals = node.numPetals || 3;
+    this.petalArcAngle = node.petalArcAngle || Math.PI ;
 
+    // console.log('Making flower node' , node);
     this.drawFlower();
     this.drawPistil();
   }
@@ -94,7 +94,8 @@ class PaperFlower {
     if (this.showPistil) {
       this.pistil = new paper.Path.Circle({x: this.flowerNode.x, y: this.flowerNode.y, radius: this.pistilSize});
       this.pistil.strokeColor = "black"
-      this.pistil.bringToFront();
+      this.pistil.sendToBack();
+      this.myGroup.addChild(this.pistil);
     } 
   }
 

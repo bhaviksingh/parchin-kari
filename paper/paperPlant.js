@@ -20,14 +20,17 @@ class PaperPlant {
     let iteration = this.plantiterator();
     let newNodes = iteration.new;
     if (newNodes.length == 0) return;
+    
     for (let i = 0; i < newNodes.length; i++) {
       let node = newNodes[i];
       let nx = node.x + this.offsetPos[0];
       let ny = node.y + this.offsetPos[1];
       if (node.type == "*"){
-        let flp = nextXY({x: nx, y: ny, angle: node.angle}, node.size * 0.5);
-        let fl = paper.Path.Circle({x: flp.x, y:  flp.y, radius: node.size, fillColor: 'rgba(255, 255,0)', strokeColor: 'rgb(180, 180,0)'});
-        this.flowerGroup.addChild(fl);
+        // let flposition = nextXY({x: nx, y: ny, angle: node.angle}, node.size * 0.5);
+        // let fl = paper.Path.Circle({x: flp.x, y:  flp.y, radius: node.size, fillColor: 'rgba(255, 255,0)', strokeColor: 'rgb(180, 180,0)'});
+        //TODO: We are drawing flowers many times? I'm not sure why.
+        let fl = new PaperFlower({...node, x: nx, y: ny, color: `rgb(${Math.random() * 255}, 50,50)`});
+        this.flowerGroup.addChild(fl.myGroup);
         continue;
       }
       let skel = this.skeletonPaths[node.branchN]

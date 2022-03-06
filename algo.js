@@ -85,7 +85,8 @@ const plant = (W, H, M, SPACING, { SPACE_BETWEEN_BRANCHES, FLOWER_SIZE}) => {
     return makeNode({ index: node.index + 1, ...nextXY(node) }, node);
   };
   const makeFlowerNode = (node) => {
-    return makeNode({ type: "*", size: node.flowerSize || FLOWER_SIZE || M, ...nextXY(node) }, node);
+    // return makeNode({ type: "*", size: node.flowerSize || FLOWER_SIZE || M, ...nextXY(node), color: "yellow", angle: node.angle}, node);
+    return {type: "*", x: node.x, y: node.y,  angle: node.angle, color: "pink", size: node.flowerSize || FLOWER_SIZE || M}
   };
   const makeCurvedNode = (node) => {
     let curve = node.flipped ? -CURVE_INCREMENT : CURVE_INCREMENT;
@@ -194,7 +195,8 @@ const plant = (W, H, M, SPACING, { SPACE_BETWEEN_BRANCHES, FLOWER_SIZE}) => {
             let curveAt = MAX_INCREMENTS/3 + Math.floor(Math.random() * (MAX_INCREMENTS/2));
             let curveOpposite = Math.random() > 0.5;
             let flowerSize = FLOWER_SIZE ? (Math.random() * 0.5 + 0.5) * FLOWER_SIZE : M;
-            let rNode = makeBranchedNode(node, node.angle + BRANCH_ANGLE, { flipped: false, curveAt, curveOpposite, flowerSize });
+  
+            let rNode = makeBranchedNode(node, node.angle + BRANCH_ANGLE, { flipped: false, curveAt, curveOpposite, flowerSize});
             addToBranch(rNode);
             newNodes.push(rNode);
             let lNode = makeBranchedNode(node, node.angle - BRANCH_ANGLE, { flipped: true, curveAt, curveOpposite, flowerSize });
