@@ -1,0 +1,29 @@
+/* Reset css  */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  
+}
+
+body {
+  background: #eee;
+}
+
+canvas {
+  margin: 20px;
+}
+
+
+.pixelated-rendering  {
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;
+}
+
+canvas {
+  background: white;
+}

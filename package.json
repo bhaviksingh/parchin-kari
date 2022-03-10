@@ -1,0 +1,38 @@
+{
+  "name": "parchin-kari",
+  "version": "1.0.0",
+  "description": "marble inlay plants gen art",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "(webpack --watch) & (http-server dist)"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bhaviksingh/parchin-kari.git"
+  },
+  "keywords": [
+    "generative",
+    "plants"
+  ],
+  "author": "bhavik",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bhaviksingh/parchin-kari/issues"
+  },
+  "homepage": "https://github.com/bhaviksingh/parchin-kari#readme",
+  "devDependencies": {
+    "@types/webpack-dev-server": "^4.7.2",
+    "copy-webpack-plugin": "^10.2.4",
+    "http-server": "^14.1.0",
+    "ts-loader": "^9.2.7",
+    "typescript": "^4.6.2",
+    "webpack": "^5.70.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4"
+  },
+  "dependencies": {
+    "paper": "^0.12.15",
+    "webpack-copy-plugin": "0.0.4"
+  }
+}
