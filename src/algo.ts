@@ -1,6 +1,7 @@
 import { Grid } from "./grid";
-import { DEFAULT_FLOWER_PARAMS, makeRandomFlowerParams, ROOT_BRANCH_PARAMS, getDefaultPlanParams, DEFAULT_FRAME_PARAMS } from "./params";
+import { DEFAULT_FLOWER_PARAMS, makeRandomFlowerParams, ROOT_BRANCH_PARAMS, getDefaultPlanParams, DEFAULT_CORE_PARAMS } from "./params";
 import { ld, nextXY } from "./utils";
+import paper from "paper";
 
 const nextNode = (node: PlantNode): PlantNode => {
   return {
@@ -16,6 +17,8 @@ const nextNode = (node: PlantNode): PlantNode => {
     width: node.width
   };
 };
+
+
 export default class Plant {
   params: PlantParams;
   newNodes: PlantNode[];
@@ -25,11 +28,12 @@ export default class Plant {
   grid: Grid
   constructor(params: Partial<PlantParams>, grid: Grid) {
     this.params = getDefaultPlanParams(params);
+    console.log("Starting plant", this.params);
     this.grid = grid;
     let rootNode: PlantNode = {
       pos: {
         x: this.params.W / 2 + this.params.OFFSET_POSITION.x,
-        y: this.params.H / 2 + this.params.OFFSET_POSITION.y,
+        y: (this.params.H - this.params.PADDING)  + this.params.OFFSET_POSITION.y,
       },
       angle: this.params.INIT_ANGLE,
       width: this.params.widthPerNode,
@@ -42,6 +46,7 @@ export default class Plant {
       flower: DEFAULT_FLOWER_PARAMS,
     };
     this.grid.addToGrid(rootNode);
+    
     this.newNodes = [rootNode];
     this.branches = [[...this.newNodes]];
     const ANGLED_LENGTH = (this.params.W / 2 - this.params.lengthPerNode) / Math.cos(this.params.BRANCH_ANGLE);
@@ -54,6 +59,9 @@ export default class Plant {
       } else {
         this.branches[node.branchNumber].push(node);
       }
+    }
+    if (node.branchNumber == 0) {
+      this.grid.addToGrid({...node, pos: {x: node.pos.x - node.width /2 , y: node.pos.y}})
     }
     this.grid.addToGrid(node);
   }
@@ -69,12 +77,14 @@ export default class Plant {
       return true;
     }
   }
-  #out(node: PlantNode) {
-    let { x, y } = node.pos;
+  #out(pos: Position) {
+    
+    let { x, y } = pos;
+    
     let { W, H, PADDING , OFFSET_POSITION} = this.params;
-    let ox = OFFSET_POSITION.x;
-    let oy = OFFSET_POSITION.y;
-    if ( (x-ox)  <= PADDING || (x-ox) >= W - PADDING || (y-oy) >= H - PADDING || (y-oy) <= PADDING) {
+    let ox = x - OFFSET_POSITION.x;
+    let oy = y - OFFSET_POSITION.y;
+    if ( ox  < PADDING || ox > W-PADDING || oy < PADDING || oy > H-PADDING) {
       return true;
     } else {
       return false;
@@ -93,7 +103,7 @@ export default class Plant {
   }
   #makeBranchedNodes(node: PlantNode) {
     let branchInfo: BranchingParams = {
-      curveAt: (Math.random() * 0.3 + 0.1) * this.MAX_INCREMENTS,
+      curveAt: (Math.random() * 0.2 + 0.1) * this.MAX_INCREMENTS,
       curveOpposite: Math.random() < 0.5,
       flipped: false
     };
@@ -108,7 +118,8 @@ export default class Plant {
       return; //This branch is finished, there is a flower here now.
     }
     //TODO: Update this to see if a *flower* here should be drawn
-    if (this.#out(node) || this.#overcurved(node) || this.grid.flowerWouldCollide(node)) {
+    let nxy = nextXY(node, Math.max(node.flower.size, node.length) * 2)
+    if (this.#out(nxy) || this.grid.flowerWouldCollide(node) ) {
       let flowerNode: FlowerNode = { ...nextNode(node), width: node.flower.size, type: "*" };
       this.#addToBranch(flowerNode);
       return [flowerNode];
@@ -172,25 +183,84 @@ export default class Plant {
 
 
 export class Frame {
-  params: FrameParams;
-  nodes: GridNode[] = [];
-  constructor(params: FrameParams) {
-    this.params = {...DEFAULT_FRAME_PARAMS, ...params};
+  params: CoreParams;
+  leftNodes: GridNode[] = [];
+  rightNodes: GridNode[] = [];
+  grid: Grid;
+  constructor(params: Partial<CoreParams>, grid: Grid) {
+    this.params = {...DEFAULT_CORE_PARAMS, ...params};
 
-    let init : GridNode = { pos: {x: this.params.W/2, y: this.params.H}, length: this.params.lengthPerNode, width: this.params.widthPerNode, angle: 0};
-    this.nodes.push(init);
+    let init: GridNode = {
+      pos: { x: this.params.W / 2 + this.params.OFFSET_POSITION.x, y: this.params.H + this.params.OFFSET_POSITION.y },
+      length: this.params.lengthPerNode,
+      width: this.params.widthPerNode,
+      angle: 0,
+      branchDepth: 0,
+      branchNumber: 0
+    };
+    this.rightNodes.push(init);
 
-    let init2 = {...init, angle: Math.PI};
-    this.nodes.push(init2);
+    let init2 = {...init, angle: Math.PI, branchNumber: 1};
+    this.leftNodes.push(init2);
+    this.grid = grid;
 
+  }
+  extendNode(node: GridNode): GridNode | undefined {
+   
+    let nxy = nextXY(node);
+    let ox = nxy.x - this.params.OFFSET_POSITION.x;
+    let oy = nxy.y - this.params.OFFSET_POSITION.y;
+    
+    let nextNode; 
+    if (ox <= 0 || ox >= this.params.W ) {
+      let angledNode = {...node, angle: -1 * Math.abs(node.angle - Math.PI/2)};
+      nextNode = { ...angledNode,  pos: nextXY(angledNode)}
+    } else if (oy <= 0 ) {
+      let angledNode = {...node, angle: ox <= node.length ? 0 : Math.PI};
+      nextNode = { ...angledNode,  pos: nextXY(angledNode)}
+      return nextNode;
+    } else if (oy <= node.length && ((node.angle == 0 && ox > this.params.W/2) || (node.angle == Math.PI && ox < this.params.W/2))) {
+      return undefined;
+    } else { 
+      nextNode = { ...node, pos: nxy };
+    }
+    return nextNode;
   }
   grow() {
-    
+    let currentL: GridNode = this.leftNodes[this.leftNodes.length - 1];
+    if (currentL) {
+      let nextL = this.extendNode(currentL);
+      if (nextL) {
+        this.leftNodes.push(nextL);
+        this.grid.addToGrid(nextL);
+      }
+    }
+    let currentR: GridNode = this.rightNodes[this.rightNodes.length - 1];
+    if (currentR) {
+      let nextR = this.extendNode(currentR);
+      if (nextR) {
+        this.rightNodes.push(nextR);
+        this.grid.addToGrid(nextR);
+      }
+      
+    }
   }
   getNewNodes() {
-
+    return [this.leftNodes[this.leftNodes.length - 1], this.rightNodes[this.rightNodes.length - 1]]
   }
   getAllNodes() {
-
+    return [this.leftNodes, this.rightNodes];
+  }
+}
+export class PlantContainer {
+  plant: Plant;
+  frame: Frame;
+  constructor(params: Partial<PlantParams>, grid: Grid) {
+    this.plant = new Plant(params, grid);
+    this.frame = new Frame(params, grid);
+  }
+  grow(){
+    this.plant.grow();
+    this.frame.grow();
   }
 }

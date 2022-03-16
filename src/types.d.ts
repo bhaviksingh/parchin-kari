@@ -6,12 +6,12 @@ type Radians = number;
 interface CoreParams {
   W: number,
   H: number,
+  PADDING: number
   lengthPerNode: number,
   widthPerNode: number,  
+  OFFSET_POSITION: Position
 }
-interface FrameParams extends CoreParams {
-  type: "TRIANGLE" | "RECTANGLE",
-}
+
 
 interface PlantParams extends CoreParams {
   INIT_ANGLE: Radians,
@@ -20,9 +20,7 @@ interface PlantParams extends CoreParams {
   CURVE_INCREMENT : Radians,
   MICRO_CURVE : Radians
   BRANCH_ANGLE: Radians,
-  BRANCH_PROBABILITY: number,
-  PADDING: number
-  OFFSET_POSITION: Position
+  BRANCH_PROBABILITY: number
 }
 
 interface GridNode {
@@ -30,12 +28,12 @@ interface GridNode {
   length: number,
   pos: Position,
   angle: Radians,
+  branchDepth: number,
+  branchNumber: number,
 }
 
 interface PlantNode extends GridNode {
   type: NodeTypes,
-  branchDepth: number,
-  branchNumber: number,
   index: number,
   branchInfo: BranchingParams
   flower: FlowerParams

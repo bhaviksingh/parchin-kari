@@ -1,6 +1,6 @@
 
-export const MINIMAL_MODE = true;
-const DBG = MINIMAL_MODE ;
+export const MINIMAL_MODE = false;
+const DBG = false && MINIMAL_MODE ;
 
 export const ld = (msg: string, ...args: any[]) => {
   if (DBG) {

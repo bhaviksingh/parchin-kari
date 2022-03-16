@@ -2,7 +2,7 @@ import { Grid } from "../grid";
 import paper from "paper"
 
 let trueColor = new paper.Color("rgba(200,200,250, 0.8)")
-let repeatedTrueColor = new paper.Color("rgba(200,200,220, 0.8)")
+let repeatedTrueColor = new paper.Color("rgba(220,200,200), 0.8)")
 let falseColor =  new paper.Color("rgba(250,250,250, 0.5)");
 
 export class DrawGrid {

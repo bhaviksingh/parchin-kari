@@ -1,8 +1,10 @@
-const DEFAULT_CORE_PARAMS = {
+export const DEFAULT_CORE_PARAMS = {
   W: 200,
   H: 600,
   lengthPerNode: 10,
-  widthPerNode: 5
+  widthPerNode: 5,
+  PADDING: 10,
+  OFFSET_POSITION: { x: 0, y: 0 },
 }
 export const getDefaultPlanParams = (params: Partial<PlantParams>): PlantParams  => {
   const constants = {
@@ -12,7 +14,7 @@ export const getDefaultPlanParams = (params: Partial<PlantParams>): PlantParams 
     MICRO_CURVE: 0,
     CURVE_INCREMENT: 0.1 * Math.PI,
     BRANCH_PROBABILITY: 0.5,
-    OFFSET_POSITION: { x: 0, y: 0 },
+    
   };
   const defaults = {...constants, ...params};
   const calculated = {
@@ -33,10 +35,7 @@ export const DEFAULT_FLOWER_PARAMS: FlowerParams = {
   pistilColor: "blue",
 };
 
-export const DEFAULT_FRAME_PARAMS : FrameParams = {
-  type: "TRIANGLE",
-  ...DEFAULT_CORE_PARAMS
-}
+
 export const ROOT_BRANCH_PARAMS = { curveAt: 10000, flipped: false, curveOpposite: false };
 
 export const makeRandomFlowerParams = (max_size: number): FlowerParams => {

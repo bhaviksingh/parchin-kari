@@ -1,5 +1,6 @@
 import paper from "paper"
-import Plant from "./algo";
+import Plant, { PlantContainer } from "./algo";
+import DrawFrame from "./draw/drawFrame";
 import { DrawGrid } from "./draw/drawGrid";
 import DrawPlant from "./draw/drawPlant";
 import { Grid } from "./grid";
@@ -26,34 +27,44 @@ function setup() {
 
 setup();
 
-let grid = new Grid(CW, CH, 6);
-let plant = new Plant({lengthPerNode: 20,  widthPerNode: 20, OFFSET_POSITION: {x: 0, y: 500}, H: 800}, grid);
-let paperPlant = new DrawPlant(plant);
+let grid = new Grid(CW, CH, 8);
 
-let plants : Plant[] = [];
+let plants : PlantContainer[] = [];
 let paperPlants: DrawPlant[] = [];
+let paperGrid: DrawGrid;
+let paperFrames: DrawFrame[] = [];
+let numTrees = MINIMAL_MODE ? 1 : 4;
 
-for (let i = 1; i <10 ; i++) {
-  let newPlant = new Plant({lengthPerNode: 10, OFFSET_POSITION: {x: 100 * i, y:600}, H: 600}, grid)
+for (let i = 0; i < numTrees ; i++) {
+  let newPlant = new PlantContainer(
+    {
+      lengthPerNode: 14,
+      OFFSET_POSITION: { x: 100 + 210 * i, y: 400 },
+      H: 400,
+      W: 200,
+      PADDING: 10,
+      SPACE_BETWEEN_BRANCHES: MINIMAL_MODE ? 100 : Math.random() * 100,
+      BRANCH_PROBABILITY: MINIMAL_MODE ? 0.2 : Math.random() + 0.3,
+    },
+    grid
+  );
   plants.push(newPlant);
-  paperPlants.push(new DrawPlant(newPlant));
+  paperPlants.push(new DrawPlant(newPlant.plant));
+  paperFrames.push(new DrawFrame(newPlant.frame));
 }
 
-let paperGrid: DrawGrid;
 if (MINIMAL_MODE) {
   paperGrid = new DrawGrid(grid);
 }
 
-
 const iterate = () => {
   console.log("...");
-  plant.grow();
   plants.forEach((pl) => pl.grow());
   if (MINIMAL_MODE) {
     (paperGrid as DrawGrid).drawGrid();
   }
-  paperPlant.drawPlant();
   paperPlants.forEach((pp) => pp.drawPlant());
+  paperFrames.forEach((pp) => pp.drawFrame());
 };
 
 if (MINIMAL_MODE) {
@@ -61,15 +72,4 @@ if (MINIMAL_MODE) {
 } else {
   setInterval(iterate, 100);
 }
-
-//@ts-ignore
-window.plant = plant;
-//@ts-ignore
-window.paperPlant = paperPlant;
-
-
-
-
-
-
 
