@@ -1,13 +1,20 @@
+
 type NodeTypes = "F" | "*" | "+";
 type Position = {x: number, y:number}
 type Radians = number;
 
-interface PlantParams {
-  lengthPerNode: number,
-  widthPerNode: number,
-  INIT_ANGLE: Radians,
+interface CoreParams {
   W: number,
   H: number,
+  lengthPerNode: number,
+  widthPerNode: number,  
+}
+interface FrameParams extends CoreParams {
+  type: "TRIANGLE" | "RECTANGLE",
+}
+
+interface PlantParams extends CoreParams {
+  INIT_ANGLE: Radians,
   SPACE_BETWEEN_BRANCHES: number,
   MAX_FLOWER_SIZE: number
   CURVE_INCREMENT : Radians,
@@ -18,15 +25,18 @@ interface PlantParams {
   OFFSET_POSITION: Position
 }
 
-interface PlantNode {
-  type: NodeTypes,
+interface GridNode {
+  width: number,
+  length: number,
   pos: Position,
   angle: Radians,
+}
+
+interface PlantNode extends GridNode {
+  type: NodeTypes,
   branchDepth: number,
   branchNumber: number,
   index: number,
-  length: number,
-  width: number,
   branchInfo: BranchingParams
   flower: FlowerParams
 }

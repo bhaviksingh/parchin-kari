@@ -1,15 +1,21 @@
 import paper from "paper"
 import Plant from "./algo";
-import PaperPlant from "./paperPlant";
+import { DrawGrid } from "./draw/drawGrid";
+import DrawPlant from "./draw/drawPlant";
+import { Grid } from "./grid";
+import { MINIMAL_MODE } from "./utils";
 
 console.log("Hello world")
+
+let CW = 1000;
+let CH = 1000;
 
 function setup() {
   let app = document.getElementById("app");
   let canvas = document.createElement("canvas");
   canvas.id = "paper-canvas";
-  canvas.width = 1000;
-  canvas.height = 1000;
+  canvas.width = CW;
+  canvas.height = CH;
   
   if (app) {
     app.appendChild(canvas);
@@ -20,16 +26,41 @@ function setup() {
 
 setup();
 
-let plant = new Plant({});
-let paperPlant = new PaperPlant(plant);
+let grid = new Grid(CW, CH, 6);
+let plant = new Plant({lengthPerNode: 20,  widthPerNode: 20, OFFSET_POSITION: {x: 0, y: 500}, H: 800}, grid);
+let paperPlant = new DrawPlant(plant);
 
-setInterval( () => {
+let plants : Plant[] = [];
+let paperPlants: DrawPlant[] = [];
+
+for (let i = 1; i <10 ; i++) {
+  let newPlant = new Plant({lengthPerNode: 10, OFFSET_POSITION: {x: 100 * i, y:600}, H: 600}, grid)
+  plants.push(newPlant);
+  paperPlants.push(new DrawPlant(newPlant));
+}
+
+let paperGrid: DrawGrid;
+if (MINIMAL_MODE) {
+  paperGrid = new DrawGrid(grid);
+}
+
+
+const iterate = () => {
+  console.log("...");
   plant.grow();
-  if (plant.getNewNodes().length > 0) {
-    console.log(plant.getBranches())
-    paperPlant.drawPlant();
+  plants.forEach((pl) => pl.grow());
+  if (MINIMAL_MODE) {
+    (paperGrid as DrawGrid).drawGrid();
   }
-}, 100);
+  paperPlant.drawPlant();
+  paperPlants.forEach((pp) => pp.drawPlant());
+};
+
+if (MINIMAL_MODE) {
+  window.addEventListener("keypress", iterate);
+} else {
+  setInterval(iterate, 100);
+}
 
 //@ts-ignore
 window.plant = plant;

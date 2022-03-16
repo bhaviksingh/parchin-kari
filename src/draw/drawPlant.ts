@@ -1,7 +1,7 @@
 import paper from "paper"
-import Plant from "./algo";
+import Plant from "../algo";
 
-export default class PaperPlant {
+export default class DrawPlant {
   plant: Plant;
   skeletonPaths: paper.Path[] = [];
   skinPaths: paper.Path[] = [];
@@ -22,11 +22,10 @@ export default class PaperPlant {
 
   drawPlant() {
     let newNodes = this.plant.getNewNodes();
-    if (newNodes.length == 0) return;
     for (let i = 0; i < newNodes.length; i++) {
       let node = newNodes[i];
-      let nx = node.pos.x + this.plant.params.OFFSET_POSITION.x;
-      let ny = node.pos.y + this.plant.params.OFFSET_POSITION.y;
+      let nx = node.pos.x;
+      let ny = node.pos.y;
       if (node.type == "*") {
         let fl = new paper.Path.Circle({
           x: node.pos.x,

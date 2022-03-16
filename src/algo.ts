@@ -1,4 +1,5 @@
-import { DEFAULT_PLANT_PARAMS, DEFAULT_FLOWER_PARAMS, makeRandomFlowerParams, ROOT_BRANCH_PARAMS } from "./params";
+import { Grid } from "./grid";
+import { DEFAULT_FLOWER_PARAMS, makeRandomFlowerParams, ROOT_BRANCH_PARAMS, getDefaultPlanParams, DEFAULT_FRAME_PARAMS } from "./params";
 import { ld, nextXY } from "./utils";
 
 const nextNode = (node: PlantNode): PlantNode => {
@@ -21,10 +22,15 @@ export default class Plant {
   branches: Branch[];
   distBetweenBranch: number = 0;
   MAX_INCREMENTS: number;
-  constructor(params: Partial<PlantParams>) {
-    this.params = { ...DEFAULT_PLANT_PARAMS, ...params };
+  grid: Grid
+  constructor(params: Partial<PlantParams>, grid: Grid) {
+    this.params = getDefaultPlanParams(params);
+    this.grid = grid;
     let rootNode: PlantNode = {
-      pos: { x: this.params.W / 2, y: this.params.H / 2 },
+      pos: {
+        x: this.params.W / 2 + this.params.OFFSET_POSITION.x,
+        y: this.params.H / 2 + this.params.OFFSET_POSITION.y,
+      },
       angle: this.params.INIT_ANGLE,
       width: this.params.widthPerNode,
       length: this.params.lengthPerNode,
@@ -35,6 +41,7 @@ export default class Plant {
       branchInfo: ROOT_BRANCH_PARAMS,
       flower: DEFAULT_FLOWER_PARAMS,
     };
+    this.grid.addToGrid(rootNode);
     this.newNodes = [rootNode];
     this.branches = [[...this.newNodes]];
     const ANGLED_LENGTH = (this.params.W / 2 - this.params.lengthPerNode) / Math.cos(this.params.BRANCH_ANGLE);
@@ -48,23 +55,26 @@ export default class Plant {
         this.branches[node.branchNumber].push(node);
       }
     }
-    //addToGrid(node);
+    this.grid.addToGrid(node);
   }
   #overcurved(node: PlantNode) {
+    return false;
     if (node.type !== "+") {
       return false;
     }
     let { INIT_ANGLE, BRANCH_ANGLE } = this.params;
     const myAngle = node.angle - INIT_ANGLE + (node.branchInfo.flipped ? BRANCH_ANGLE : -1 * BRANCH_ANGLE);
-    if (myAngle && Math.abs(myAngle) > 0.6 * Math.PI) {
+    if (myAngle && Math.abs(myAngle) > 0.76 * Math.PI) {
       ld("Stopping at ", myAngle / Math.PI);
       return true;
     }
   }
   #out(node: PlantNode) {
     let { x, y } = node.pos;
-    let { W, H, PADDING } = this.params;
-    if (x <= PADDING || x >= W - PADDING || y >= H - PADDING || y <= PADDING) {
+    let { W, H, PADDING , OFFSET_POSITION} = this.params;
+    let ox = OFFSET_POSITION.x;
+    let oy = OFFSET_POSITION.y;
+    if ( (x-ox)  <= PADDING || (x-ox) >= W - PADDING || (y-oy) >= H - PADDING || (y-oy) <= PADDING) {
       return true;
     } else {
       return false;
@@ -98,8 +108,8 @@ export default class Plant {
       return; //This branch is finished, there is a flower here now.
     }
     //TODO: Update this to see if a *flower* here should be drawn
-    if (this.#out(node) || this.#overcurved(node)) {
-      let flowerNode: FlowerNode = { ...nextNode(node), type: "*" };
+    if (this.#out(node) || this.#overcurved(node) || this.grid.flowerWouldCollide(node)) {
+      let flowerNode: FlowerNode = { ...nextNode(node), width: node.flower.size, type: "*" };
       this.#addToBranch(flowerNode);
       return [flowerNode];
     }
@@ -123,7 +133,7 @@ export default class Plant {
           this.distBetweenBranch = 0;
           let branchNodes = this.#makeBranchedNodes(node);
           branchNodes.forEach(bn => { this.#addToBranch(bn); leaves.push(bn)});
-          console.log("Branching complete", leaves);
+          ld("Branching complete", leaves);
         }
       }
       return leaves;
@@ -157,5 +167,30 @@ export default class Plant {
   }
   getBranches() {
     return this.branches;
+  }
+}
+
+
+export class Frame {
+  params: FrameParams;
+  nodes: GridNode[] = [];
+  constructor(params: FrameParams) {
+    this.params = {...DEFAULT_FRAME_PARAMS, ...params};
+
+    let init : GridNode = { pos: {x: this.params.W/2, y: this.params.H}, length: this.params.lengthPerNode, width: this.params.widthPerNode, angle: 0};
+    this.nodes.push(init);
+
+    let init2 = {...init, angle: Math.PI};
+    this.nodes.push(init2);
+
+  }
+  grow() {
+    
+  }
+  getNewNodes() {
+
+  }
+  getAllNodes() {
+
   }
 }
